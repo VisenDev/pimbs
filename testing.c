@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include "color.h"
 #include <string.h>
+#include <stdint.h>
 
 typedef struct {
    const char* name;
@@ -13,6 +14,7 @@ typedef struct {
     testing_TestTracker active;
 } testing_State;
 
+[[gnu::const]]
 testing_State testing_start(){
     return (testing_State) {
         .overall = (testing_TestTracker){.name = "SUMMARY"},
