@@ -4,17 +4,21 @@
 #include <stddef.h>
 #include <stdlib.h>
 
+#include "testing.c"
+
 //#define ARENA_IMPLEMENTATION
 //#include "arena.h"
 
 
-//#define Vector(T) \
-//    struct { \
-//        T* items; \
-//        uint64_t len; \
-//        uint64_t cap; \
-//    }
-//
+/*
+#define Vector(T) \
+struct { \
+T* items; \
+uint64_t len; \
+uint64_t cap; \
+}
+
+*/
 
 
 #define byte char
@@ -35,7 +39,6 @@ void vector_audit(const Vector self) {
 
 void * vector_get(const Vector self, const uint64_t index) {
     vector_audit(self);
-    assert(index >= 0);
     assert(index < self.elem_count);
     return self.data + (index * self.elem_size_bytes);
 }
@@ -46,9 +49,9 @@ Vector vector_init(const size_t elem_size_bytes) {
 
     const Vector result = (Vector){
         .data = malloc(capacity_bytes),
-        .elem_size_bytes = elem_size_bytes,
-        .elem_capacity = initial_capacity,
-        .elem_count = 0,
+            .elem_size_bytes = elem_size_bytes,
+            .elem_capacity = initial_capacity,
+            .elem_count = 0,
     };
     vector_audit(result);
     return result;
@@ -79,5 +82,23 @@ void * vector_append(Vector * self) {
 }
 
 int main() {
+    testing_State t = testing_start();
+
+
+    testing_start_test(&t, "general");
+    {
+        testing_expect(&t, 1 == 1, "equals");
+        testing_expect(&t, 2 == 2, "two");
+        testing_finish_test(&t);
+    }
+
+    testing_start_test(&t, "specific");
+    {
+        testing_expect(&t, 1 != 1, "unequal");
+        testing_expect(&t, 2 == 2, "two_equal");
+        testing_finish_test(&t);
+    }
+
+    testing_end(&t);
     return 0;
 }
