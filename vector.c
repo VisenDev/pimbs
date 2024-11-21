@@ -4,7 +4,8 @@
 #include <stddef.h>
 #include <stdlib.h>
 
-#include "testing.c"
+#define TESTING_IMPLEMENTATION
+#include "testing.h"
 
 //#define ARENA_IMPLEMENTATION
 //#include "arena.h"
@@ -37,13 +38,19 @@ void vector_audit(const Vector self) {
     assert(self.elem_count <= self.elem_capacity);
 }
 
-void * vector_get(const Vector self, const uint64_t index) {
+#define vector_get(Type, vector, index) \
+        (assert(sizeof(Type) == vector.elem_size_bytes), \
+        *(Type*)_vector_get(vector, index))
+
+void * _vector_get(const Vector self, const uint64_t index) {
     vector_audit(self);
     assert(index < self.elem_count);
     return self.data + (index * self.elem_size_bytes);
 }
 
-Vector vector_init(const size_t elem_size_bytes) {
+
+#define vector_init(Type) _vector_init(sizeof(Type))
+Vector _vector_init(const size_t elem_size_bytes) {
     const uint64_t initial_capacity = 8;
     const uint64_t capacity_bytes = elem_size_bytes * initial_capacity;
 
@@ -71,34 +78,42 @@ void vector_double_capacity(Vector * self) {
     vector_audit(*self);
 }
 
-void * vector_append(Vector * self) {
+#define vector_append(Type, vector, value) *(Type*)_vector_append(vector) = value
+void * _vector_append(Vector * self) {
     vector_audit(*self);
 
     if(!vector_has_capacity_for(*self, 1)) {
         vector_double_capacity(self);
     }
     self->elem_count += 1;
-    return vector_get(*self, self->elem_count - 1);
+    return _vector_get(*self, self->elem_count - 1);
+}
+
+void run_tests() {
+    testing_State t = testing_start();
+    testing_start_test(&t, "vector");
+    Vector v = vector_init(char);
+
+    vector_append(char, &v, 'a');
+    testing_expect(&t, vector_get(char, v, 0) == 'a', "1");
+
+    vector_append(char, &v, 's');
+    vector_append(char, &v, 'd');
+    vector_append(char, &v, 'f');
+
+    testing_expect(&t, vector_get(char, v, 0) == 'a', "2");
+    testing_expect(&t, vector_get(char, v, 1) == 's', "3");
+    testing_expect(&t, vector_get(char, v, 2) == 'd', "4");
+    testing_expect(&t, vector_get(char, v, 3) == 'f', "5");
+
+    testing_end(&t);
 }
 
 int main() {
-    testing_State t = testing_start();
 
+    #ifdef TEST
+        run_tests();
+    #endif //TEST
 
-    testing_start_test(&t, "general");
-    {
-        testing_expect(&t, 1 == 1, "equals");
-        testing_expect(&t, 2 == 2, "two");
-        testing_finish_test(&t);
-    }
-
-    testing_start_test(&t, "specific");
-    {
-        testing_expect(&t, 1 != 1, "unequal");
-        testing_expect(&t, 2 == 2, "two_equal");
-        testing_finish_test(&t);
-    }
-
-    testing_end(&t);
     return 0;
 }
