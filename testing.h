@@ -1,4 +1,5 @@
 #ifndef TESTING_H
+#define TESTING_H
 
 #include <stdio.h>
 #include "color.h"
@@ -15,28 +16,28 @@ typedef struct {
     testing_TestTracker overall;
     testing_TestTracker active;
 } testing_State;
+
 #endif //TESTING_H
 
-#undef DEFUN
+
+//function body implementation macro
+#undef implementation
+
 #ifdef TESTING_IMPLEMENTATION
-   #define DEFUN(prototype, ...) prototype __VA_ARGS__
-#elif defined TESTING_H
-   #define DEFUN(...)
+   #define implementation(...) {__VA_ARGS__}
 #else
-    #define DEFUN(prototype, ...) prototype;
-    #define TESTING_H
+   #define implementation(...) ;
 #endif
 
-DEFUN(testing_State testing_start(),
-{
+
+testing_State testing_start() implementation (
     return (testing_State) {
         .overall = (testing_TestTracker){.name = "SUMMARY"},
         .active = {0},
     };
-})
+)
 
-DEFUN(static void testing_print_header(const char * str),
-{
+static void testing_print_header(const char * str) implementation (
     const size_t desired_width = 40;
     const size_t len = strlen(str);
     const size_t padding_needed = desired_width - len;
@@ -51,18 +52,16 @@ DEFUN(static void testing_print_header(const char * str),
         printf("=");
     }
     printf("\n");
-})
+)
 
-DEFUN(static void testing_print_summary(const testing_TestTracker tracker),
-{
+static void testing_print_summary(const testing_TestTracker tracker) implementation (
     testing_print_header(tracker.name);
     printf("PASSED: " ANSI_COLOR_GREEN "%i\n" ANSI_COLOR_RESET, tracker.passed);
     printf("FAILED: " ANSI_COLOR_RED "%i\n" ANSI_COLOR_RESET, tracker.failed);
     testing_print_header("");
-})
+)
 
-DEFUN(void testing_end(testing_State * state),
-{
+void testing_end(testing_State * state) implementation (
     if(state->active.name != NULL) {
         state->overall.passed += state->active.passed;
         state->overall.failed += state->active.failed;
@@ -73,11 +72,10 @@ DEFUN(void testing_end(testing_State * state),
     } else {
         exit(0);
     }
-})
+)
 
 
-DEFUN(void testing_start_test(testing_State * state, const char* test_name),
-{
+void testing_start_test(testing_State * state, const char* test_name) implementation (
     if(state->active.name != NULL) {
         state->overall.passed += state->active.passed;
         state->overall.failed += state->active.failed;
@@ -86,14 +84,16 @@ DEFUN(void testing_start_test(testing_State * state, const char* test_name),
     //update active
     state->active = (testing_TestTracker){0};
     state->active.name = test_name;
-
-    //testing_print_header("STARTING TEST");
-    //printf("===============STARTING=%s================\n", state->active.value.name);
-})
+)
 
 #define testing_expect(state, condition, name) _testing_expect(state, condition, name, __LINE__, __FILE__)
-DEFUN(void _testing_expect(testing_State * state, const bool condition, const char name[], const int line, const char * file),
-{
+void _testing_expect(
+        testing_state * state,
+        const bool condition,
+        const char name[],
+        const int line,
+        const char * file
+) implementation (
     if(condition) {
         printf("./testing %s.%s... " ANSI_COLOR_GREEN "[PASSED]\n" ANSI_COLOR_RESET, state->active.name, name); 
         state->active.passed += 1;
@@ -102,4 +102,5 @@ DEFUN(void _testing_expect(testing_State * state, const bool condition, const ch
         printf(ANSI_COLOR_RED "   -> %s:%i\n" ANSI_COLOR_RESET , file , line); 
         state->active.failed += 1;
     }
-})
+)
+
