@@ -7,21 +7,6 @@
 #define TESTING_IMPLEMENTATION
 #include "testing.h"
 
-//#define ARENA_IMPLEMENTATION
-//#include "arena.h"
-
-
-/*
-#define Vector(T) \
-struct { \
-T* items; \
-uint64_t len; \
-uint64_t cap; \
-}
-
-*/
-
-
 #define byte char
 
 typedef struct {
@@ -38,10 +23,7 @@ void vector_audit(const Vector self) {
     assert(self.elem_count <= self.elem_capacity);
 }
 
-#define vector_get(Type, vector, index) \
-        (assert(sizeof(Type) == vector.elem_size_bytes), \
-        *(Type*)_vector_get(vector, index))
-
+#define vector_get(Type, vector, index) (Type*)_vector_get(vector, index)
 void * _vector_get(const Vector self, const uint64_t index) {
     vector_audit(self);
     assert(index < self.elem_count);
@@ -78,33 +60,82 @@ void vector_double_capacity(Vector * self) {
     vector_audit(*self);
 }
 
-#define vector_append(Type, vector, value) *(Type*)_vector_append(vector) = value
-void * _vector_append(Vector * self) {
+
+#define vector_set(vector, index, value) \
+    do { \
+        typeof(value) value_location = value; \
+        _vector_set(vector, index, &value_location); \
+    } while(0)
+void _vector_set(Vector * self, uint64_t index, void * value) {
+    vector_audit(*self);
+    assert(index < self->elem_count);
+    memcpy(_vector_get(*self, index), value, self->elem_size_bytes);
+}
+
+#define vector_append(vector, value) \
+    do { \
+        typeof(value) value_location = value; \
+        _vector_append(vector, &value_location); \
+    } while(0)
+void _vector_append(Vector * self, void * value) {
     vector_audit(*self);
 
     if(!vector_has_capacity_for(*self, 1)) {
         vector_double_capacity(self);
     }
     self->elem_count += 1;
-    return _vector_get(*self, self->elem_count - 1);
+    _vector_set(self, self->elem_count - 1, value);
+}
+
+#define vector_top(Type, vector) (Type*)_vector_top(vector)
+void * _vector_top(const Vector self) {
+   return _vector_get(self, self.elem_count - 1);
+}
+
+void vector_remove(Vector * self, uint64_t index) {
+    vector_audit(*self);
+    void * top = _vector_top(*self);
+    _vector_set(self, index, top);
+    self->elem_count -= 1;
+    vector_audit(*self);
+}
+
+void vector_pop(Vector * self) {
+    vector_remove(self, self->elem_count - 1);
 }
 
 void run_tests() {
     testing_State t = testing_start();
-    testing_start_test(&t, "vector");
+    testing_start_test(&t, "vector-append");
     Vector v = vector_init(char);
 
-    vector_append(char, &v, 'a');
-    testing_expect(&t, vector_get(char, v, 0) == 'a', "1");
+    vector_append(&v, 'a');
+    testing_expect(&t, *vector_get(char, v, 0) == 'a', "a-initial");
 
-    vector_append(char, &v, 's');
-    vector_append(char, &v, 'd');
-    vector_append(char, &v, 'f');
+    vector_append(&v, 's');
+    vector_append(&v, 'd');
+    vector_append(&v, 'f');
 
-    testing_expect(&t, vector_get(char, v, 0) == 'a', "2");
-    testing_expect(&t, vector_get(char, v, 1) == 's', "3");
-    testing_expect(&t, vector_get(char, v, 2) == 'd', "4");
-    testing_expect(&t, vector_get(char, v, 3) == 'f', "5");
+    testing_expect(&t, *vector_get(char, v, 0) == 'a', "a");
+    testing_expect(&t, *vector_get(char, v, 1) == 's', "s");
+    testing_expect(&t, *vector_get(char, v, 2) == 'd', "d");
+    testing_expect(&t, *vector_get(char, v, 3) == 'f', "f");
+
+    testing_start_test(&t, "vector-assign");
+
+    vector_set(&v, 0, 'z');
+    testing_expect(&t, *vector_get(char, v, 0) == 'z', "z-assign");
+    testing_expect(&t, *vector_get(char, v, 1) == 's', "unchanged-s");
+    testing_expect(&t, *vector_get(char, v, 2) == 'd', "unchanged-d");
+    testing_expect(&t, *vector_get(char, v, 3) == 'f', "unchanged-f");
+
+    testing_start_test(&t, "vector-top");
+
+    testing_expect(&t, *vector_top(char, v) == 'f', "initial");
+    vector_append(&v, 'g');
+    testing_expect(&t, *vector_top(char, v) == 'g', "after-append");
+    vector_pop(&v);
+    testing_expect(&t, *vector_top(char, v) == 'f', "after-pop");
 
     testing_end(&t);
 }
