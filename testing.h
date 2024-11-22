@@ -5,6 +5,7 @@
 #include "color.h"
 #include <string.h>
 #include <stdint.h>
+#include <stdlib.h>
 
 typedef struct {
    const char* name;
@@ -17,27 +18,19 @@ typedef struct {
     testing_TestTracker active;
 } testing_State;
 
+testing_State testing_start();
+void testing_end(testing_State*);
+void testing_start_test(testing_State *, const char*);
+#define testing_expect(state, condition, name) _testing_expect(state, condition, name, __LINE__, __FILE__)
+void _testing_expect( testing_State *, const bool , const char[], const int, const char *);
+
 #endif //TESTING_H
 
 
-//function body implementation macro
-#undef implementation
-
 #ifdef TESTING_IMPLEMENTATION
-   #define implementation(...) {__VA_ARGS__}
-#else
-   #define implementation(...) ;
-#endif
+#undef TESTING_IMPLEMENTATION
 
-
-testing_State testing_start() implementation (
-    return (testing_State) {
-        .overall = (testing_TestTracker){.name = "SUMMARY"},
-        .active = {0},
-    };
-)
-
-static void testing_print_header(const char * str) implementation (
+static void testing_print_header(const char * str) {
     const size_t desired_width = 40;
     const size_t len = strlen(str);
     const size_t padding_needed = desired_width - len;
@@ -52,16 +45,24 @@ static void testing_print_header(const char * str) implementation (
         printf("=");
     }
     printf("\n");
-)
+}
 
-static void testing_print_summary(const testing_TestTracker tracker) implementation (
+static void testing_print_summary(const testing_TestTracker tracker) {
     testing_print_header(tracker.name);
     printf("PASSED: " ANSI_COLOR_GREEN "%i\n" ANSI_COLOR_RESET, tracker.passed);
     printf("FAILED: " ANSI_COLOR_RED "%i\n" ANSI_COLOR_RESET, tracker.failed);
     testing_print_header("");
-)
+}
 
-void testing_end(testing_State * state) implementation (
+
+testing_State testing_start() {
+    return (testing_State) {
+        .overall = (testing_TestTracker){.name = "SUMMARY"},
+            .active = {0},
+    };
+}
+
+void testing_end(testing_State * state) {
     if(state->active.name != NULL) {
         state->overall.passed += state->active.passed;
         state->overall.failed += state->active.failed;
@@ -72,10 +73,10 @@ void testing_end(testing_State * state) implementation (
     } else {
         exit(0);
     }
-)
+}
 
 
-void testing_start_test(testing_State * state, const char* test_name) implementation (
+void testing_start_test(testing_State * state, const char* test_name) {
     if(state->active.name != NULL) {
         state->overall.passed += state->active.passed;
         state->overall.failed += state->active.failed;
@@ -84,16 +85,16 @@ void testing_start_test(testing_State * state, const char* test_name) implementa
     //update active
     state->active = (testing_TestTracker){0};
     state->active.name = test_name;
-)
+}
 
 #define testing_expect(state, condition, name) _testing_expect(state, condition, name, __LINE__, __FILE__)
 void _testing_expect(
-        testing_state * state,
+        testing_State * state,
         const bool condition,
         const char name[],
         const int line,
         const char * file
-) implementation (
+        ) {
     if(condition) {
         printf("./testing %s.%s... " ANSI_COLOR_GREEN "[PASSED]\n" ANSI_COLOR_RESET, state->active.name, name); 
         state->active.passed += 1;
@@ -102,5 +103,5 @@ void _testing_expect(
         printf(ANSI_COLOR_RED "   -> %s:%i\n" ANSI_COLOR_RESET , file , line); 
         state->active.failed += 1;
     }
-)
-
+}
+#endif //TESTING_IMPLEMENTATION
