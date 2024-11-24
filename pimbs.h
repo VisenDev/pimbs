@@ -264,8 +264,9 @@ void pimbs_vector_run_tests() {
     pimbs_testing_start_test(&t, "pimbs_vector-append");
     pimbs_Vector v = pimbs_vector_init(char);
 
-    pimbs_vector_append(&v, 'a');
-    pimbs_testing_expect(&t, *pimbs_vector_get(char, &v, 0) == 'a', "a-initial");
+    pimbs_vector_append(&v, 'y');
+    pimbs_testing_expect(&t, *pimbs_vector_get(char, &v, 0) == 'y', "y-initial");
+    pimbs_vector_set_internal(&v, 0, &(char){'a'});
 
     pimbs_vector_append(&v, 's');
     pimbs_vector_append(&v, 'd');
