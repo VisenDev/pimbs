@@ -311,4 +311,49 @@ void pimbs_vector_run_tests() {
     pimbs_testing_end(&t);
 }
 
+
+//======================SPARSE SET===============================
+typedef struct {
+    pimbs_Vector dense;
+    pimbs_Vector sparse;
+    pimbs_Vector dense_to_sparse_map;
+} pimbs_SparseSet;
+
+typedef struct {
+    enum {PIMBS_TAG_NULL, PIMBS_TAG_VALID} tag;
+    uint64_t data;
+} pimbs_OptionalIndex;
+
+pimbs_SparseSet pimbs_ss_init(size_t elem_size_bytes, uint64_t initial_capacity) {
+   pimbs_SparseSet result = (pimbs_SparseSet){
+        .dense = pimbs_vector_init_internal(elem_size_bytes),
+        .sparse = pimbs_vector_init(pimbs_OptionalIndex),
+        .dense_to_sparse_map = pimbs_vector_init(uint64_t),
+   };
+   pimbs_OptionalIndex initial_sparse_contents[initial_capacity] = {};
+   pimbs_vector_append_array(&result.sparse, initial_sparse_contents, initial_capacity);
+   return result;
+}
+
+void pimbs_ss_deinit(pimbs_SparseSet * self){
+    pimbs_vector_deinit(&self->dense);
+    pimbs_vector_deinit(&self->sparse);
+    pimbs_vector_deinit(&self->dense_to_sparse_map);
+    *self = (pimbs_SparseSet){0};
+}
+
+void pimbs_ss_set(pimbs_SparseSet * self, void * value, uint64_t sparse_index) {
+    pimbs_OptionalIndex * dense_index = pimbs_vector_get(pimbs_OptionalIndex, &self->sparse, sparse_index);
+    if(dense_index->tag == PIMBS_TAG_NULL) {
+        pimbs_vector_append_internal(&self->dense, value);
+        dense_index->tag = PIMBS_TAG_VALID;
+        dense_index->data = self->dense.elem_count;
+    } else {
+        pimbs_vector_set_internal(&self->dense, dense_index->data, value);
+    }
+}
+void * pimbs_ss_get(pimbs_SparseSet * self, uint64_t sparse_index);
+void pimbs_ss_unset(pimbs_SparseSet * self, uint64_t sparse_index);
+void pimbs_ss_run_tests();
+
 #endif //PIMBS_IMPLEMENTATION
