@@ -2,23 +2,45 @@
 #define PIMBS_H
 
 #include <stdio.h>
-#include "color.h"
 #include <string.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <stdbool.h>
-#include <assert.h>
+
+#define ANSI_COLOR_RED     "\x1b[31m"
+#define ANSI_COLOR_GREEN   "\x1b[32m"
+#define ANSI_COLOR_YELLOW  "\x1b[33m"
+#define ANSI_COLOR_BLUE    "\x1b[34m"
+#define ANSI_COLOR_MAGENTA "\x1b[35m"
+#define ANSI_COLOR_CYAN    "\x1b[36m"
+#define ANSI_COLOR_RESET   "\x1b[0m"
 
 //=======================ASSERT=================================
-#define pimbs_assert(format_specifier, operator, lhs, rhs) \
+#define pimbs_assert(format_specifier, lhs, operator, rhs) \
     do { \
         typeof(lhs) lhs_copy = lhs; \
         typeof(lhs) rhs_copy = rhs; \
         if(!(lhs_copy operator rhs_copy)) { \
-            printf("\nAssertion Failure: (%s %s %s)\n", #lhs, #operator, #rhs); \
-            printf("%s = "format_specifier" \n%s = "format_specifier"\n", #lhs, lhs_copy, #rhs, rhs_copy); \
-            exit(1); \
-            assert(lhs_copy operator rhs_copy); \
+            printf( \
+                    ANSI_COLOR_RED "\n[Assertion Failure]"ANSI_COLOR_RESET \
+                    " assert(" \
+                    ANSI_COLOR_YELLOW"%s"ANSI_COLOR_RESET \
+                    " %s "\
+                    ANSI_COLOR_YELLOW"%s"ANSI_COLOR_RESET \
+                    ")\n", #lhs, #operator, #rhs \
+            ); \
+            printf( \
+                    "  note: \n    " \
+                    ANSI_COLOR_YELLOW"%s"ANSI_COLOR_RESET \
+                    " = " \
+                    ANSI_COLOR_RED format_specifier ANSI_COLOR_RESET \
+                    " \n    " \
+                    ANSI_COLOR_YELLOW"%s"ANSI_COLOR_RESET \
+                    " = " \
+                    ANSI_COLOR_RED format_specifier ANSI_COLOR_RESET \
+                    "\n", #lhs, lhs_copy, #rhs, rhs_copy \
+            ); \
+            abort(); \
         } \
     } while (0)
 
@@ -169,9 +191,9 @@ void pimbs_testing_expect_internal(
 //
 static void pimbs_vector_audit(pimbs_Vector * self)
 {
-    pimbs_assert("%s", !=, self->data, NULL);
-    pimbs_assert("%zu", >, self->elem_size_bytes, 0);
-    pimbs_assert("%llu",<= ,self->elem_count, self->elem_capacity);
+    pimbs_assert("%s", self->data, !=, NULL);
+    pimbs_assert("%zu", self->elem_size_bytes, >, 0);
+    pimbs_assert("%llu",self->elem_count, <=, self->elem_capacity);
 }
 
 static bool pimbs_vector_has_capacity_for(pimbs_Vector * self, uint64_t item_count)
@@ -194,7 +216,7 @@ static void pimbs_vector_double_capacity(pimbs_Vector * self)
 void * pimbs_vector_get_internal(pimbs_Vector * self, const uint64_t index)
 {
     pimbs_vector_audit(self);
-    pimbs_assert("%llu", <, index, self->elem_count);
+    pimbs_assert("%llu", index, <, self->elem_count);
     return self->data + (index * self->elem_size_bytes);
 }
 
@@ -222,7 +244,7 @@ pimbs_Vector pimbs_vector_init_internal(const size_t elem_size_bytes)
 void pimbs_vector_set_internal(pimbs_Vector * self, uint64_t index, void * value)
 {
     pimbs_vector_audit(self);
-    assert(index < self->elem_count);
+    pimbs_assert("%llu", index, <, self->elem_count);
     memcpy(pimbs_vector_get_internal(self, index), value, self->elem_size_bytes);
 }
 
@@ -261,7 +283,7 @@ void * pimbs_vector_top_internal(pimbs_Vector * self) {
 void pimbs_vector_remove(pimbs_Vector * self, uint64_t index)
 {
     pimbs_vector_audit(self);
-    assert(index < self->elem_count);
+    pimbs_assert("%llu", index, <, self->elem_count);
 
     void * top = pimbs_vector_top_internal(self);
     pimbs_vector_set_internal(self, index, top);
