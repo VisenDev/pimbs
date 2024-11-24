@@ -9,6 +9,18 @@
 #include <stdbool.h>
 #include <assert.h>
 
+//=======================ASSERT=================================
+#define pimbs_assert(format_specifier, operator, lhs, rhs) \
+    do { \
+        typeof(lhs) lhs_copy = lhs; \
+        typeof(lhs) rhs_copy = rhs; \
+        if(!(lhs_copy operator rhs_copy)) { \
+            printf("\nAssertion Failure: (%s %s %s)\n", #lhs, #operator, #rhs); \
+            printf("%s = "format_specifier" \n%s = "format_specifier"\n", #lhs, lhs_copy, #rhs, rhs_copy); \
+            exit(1); \
+            assert(lhs_copy operator rhs_copy); \
+        } \
+    } while (0)
 
 //====================TESTING======================
 typedef struct {
@@ -157,9 +169,9 @@ void pimbs_testing_expect_internal(
 //
 static void pimbs_vector_audit(pimbs_Vector * self)
 {
-    assert(self->data != NULL);
-    assert(self->elem_size_bytes > 0);
-    assert(self->elem_count <= self->elem_capacity);
+    pimbs_assert("%s", !=, self->data, NULL);
+    pimbs_assert("%zu", >, self->elem_size_bytes, 0);
+    pimbs_assert("%llu",<= ,self->elem_count, self->elem_capacity);
 }
 
 static bool pimbs_vector_has_capacity_for(pimbs_Vector * self, uint64_t item_count)
@@ -182,7 +194,7 @@ static void pimbs_vector_double_capacity(pimbs_Vector * self)
 void * pimbs_vector_get_internal(pimbs_Vector * self, const uint64_t index)
 {
     pimbs_vector_audit(self);
-    assert(index < self->elem_count);
+    pimbs_assert("%llu", <, index, self->elem_count);
     return self->data + (index * self->elem_size_bytes);
 }
 
@@ -313,8 +325,7 @@ void pimbs_vector_run_tests(pimbs_testing_State * t) {
     pimbs_vector_deinit(&v);
 }
 
-
-//======================SPARSE SET===============================
+//======================SPARSE SET==============================
 typedef struct {
     pimbs_Vector dense;
     pimbs_Vector sparse;
@@ -347,13 +358,13 @@ void pimbs_ss_deinit(pimbs_SparseSet * self){
 void pimbs_ss_set_internal(pimbs_SparseSet * self, uint64_t sparse_index, void * value) {
     pimbs_OptionalIndex * dense_index = pimbs_vector_get(pimbs_OptionalIndex, &self->sparse, sparse_index);
     if(dense_index->tag == PIMBS_TAG_NULL) {
-        printf("index %d not set, setting...\n", sparse_index);
+        //printf("index %d not set, setting...\n", sparse_index);
         pimbs_vector_append_internal(&self->dense, value);
         dense_index->tag = PIMBS_TAG_VALID;
-        dense_index->data = self->dense.elem_count;
+        dense_index->data = self->dense.elem_count - 1;
         pimbs_vector_append(&self->dense_to_sparse_map, sparse_index);
     } else {
-        printf("index %d set, overwriting...\n", sparse_index);
+        //printf("index %d set, overwriting...\n", sparse_index);
         pimbs_vector_set_internal(&self->dense, dense_index->data, value);
     }
 }
