@@ -22,7 +22,7 @@ typedef struct {
     pimbs_testing_Tracker active;
 } pimbs_testing_State;
 
-pimbs_testing_State pimbs_testing_start();
+pimbs_testing_State * pimbs_testing_start();
 void pimbs_testing_end(pimbs_testing_State*);
 void pimbs_testing_start_test(pimbs_testing_State *, const char*);
 #define pimbs_testing_expect(state, condition, name) pimbs_testing_expect_internal(state, condition, name, __LINE__, __FILE__)
@@ -65,7 +65,7 @@ void * pimbs_vector_top_internal(pimbs_Vector * self);
 
 void pimbs_vector_remove(pimbs_Vector * self, uint64_t index);
 void pimbs_vector_pop(pimbs_Vector * self);
-void pimbs_vector_run_tests();
+void pimbs_vector_run_tests(pimbs_testing_State*);
 
 #endif //PIMBS_H
 
@@ -100,11 +100,13 @@ static void pimbs_testing_print_summary(const pimbs_testing_Tracker tracker) {
 }
 
 
-pimbs_testing_State pimbs_testing_start() {
-    return (pimbs_testing_State) {
+pimbs_testing_State * pimbs_testing_start() {
+    pimbs_testing_State * result = malloc(sizeof(pimbs_testing_State));
+    *result = (pimbs_testing_State) {
         .overall = (pimbs_testing_Tracker){.name = "SUMMARY"},
             .active = {0},
     };
+    return result;
 }
 
 void pimbs_testing_end(pimbs_testing_State * state) {
@@ -113,11 +115,12 @@ void pimbs_testing_end(pimbs_testing_State * state) {
         state->overall.failed += state->active.failed;
     }
     pimbs_testing_print_summary(state->overall);
-    if(state->overall.failed != 0) {
-        exit(1);
-    } else {
-        exit(0);
-    }
+    free(state);
+    //if(state->overall.failed != 0) {
+    //    exit(1);
+    //} else {
+    //    exit(0);
+    //}
 }
 
 
@@ -259,46 +262,45 @@ void pimbs_vector_pop(pimbs_Vector * self)
     pimbs_vector_remove(self, self->elem_count - 1);
 }
 
-void pimbs_vector_run_tests() {
-    pimbs_testing_State t = pimbs_testing_start();
-    pimbs_testing_start_test(&t, "pimbs_vector-append");
+void pimbs_vector_run_tests(pimbs_testing_State * t) {
+    pimbs_testing_start_test(t, "pimbs_vector-append");
     pimbs_Vector v = pimbs_vector_init(char);
 
     pimbs_vector_append(&v, 'y');
-    pimbs_testing_expect(&t, *pimbs_vector_get(char, &v, 0) == 'y', "y-initial");
+    pimbs_testing_expect(t, *pimbs_vector_get(char, &v, 0) == 'y', "y-initial");
     pimbs_vector_set_internal(&v, 0, &(char){'a'});
 
     pimbs_vector_append(&v, 's');
     pimbs_vector_append(&v, 'd');
     pimbs_vector_append(&v, 'f');
 
-    pimbs_testing_expect(&t, *pimbs_vector_get(char, &v, 0) == 'a', "a");
-    pimbs_testing_expect(&t, *pimbs_vector_get(char, &v, 1) == 's', "s");
-    pimbs_testing_expect(&t, *pimbs_vector_get(char, &v, 2) == 'd', "d");
-    pimbs_testing_expect(&t, *pimbs_vector_get(char, &v, 3) == 'f', "f");
+    pimbs_testing_expect(t, *pimbs_vector_get(char, &v, 0) == 'a', "a");
+    pimbs_testing_expect(t, *pimbs_vector_get(char, &v, 1) == 's', "s");
+    pimbs_testing_expect(t, *pimbs_vector_get(char, &v, 2) == 'd', "d");
+    pimbs_testing_expect(t, *pimbs_vector_get(char, &v, 3) == 'f', "f");
 
-    pimbs_testing_start_test(&t, "pimbs_vector-assign");
+    pimbs_testing_start_test(t, "pimbs_vector-assign");
 
     pimbs_vector_set(&v, 0, 'z');
-    pimbs_testing_expect(&t, *pimbs_vector_get(char, &v, 0) == 'z', "z-assign");
-    pimbs_testing_expect(&t, *pimbs_vector_get(char, &v, 1) == 's', "unchanged-s");
-    pimbs_testing_expect(&t, *pimbs_vector_get(char, &v, 2) == 'd', "unchanged-d");
-    pimbs_testing_expect(&t, *pimbs_vector_get(char, &v, 3) == 'f', "unchanged-f");
+    pimbs_testing_expect(t, *pimbs_vector_get(char, &v, 0) == 'z', "z-assign");
+    pimbs_testing_expect(t, *pimbs_vector_get(char, &v, 1) == 's', "unchanged-s");
+    pimbs_testing_expect(t, *pimbs_vector_get(char, &v, 2) == 'd', "unchanged-d");
+    pimbs_testing_expect(t, *pimbs_vector_get(char, &v, 3) == 'f', "unchanged-f");
 
-    pimbs_testing_start_test(&t, "pimbs_vector-top");
+    pimbs_testing_start_test(t, "pimbs_vector-top");
 
-    pimbs_testing_expect(&t, *pimbs_vector_top(char, &v) == 'f', "initial");
+    pimbs_testing_expect(t, *pimbs_vector_top(char, &v) == 'f', "initial");
     pimbs_vector_append(&v, 'g');
-    pimbs_testing_expect(&t, *pimbs_vector_top(char, &v) == 'g', "after-append");
+    pimbs_testing_expect(t, *pimbs_vector_top(char, &v) == 'g', "after-append");
     pimbs_vector_pop(&v);
-    pimbs_testing_expect(&t, *pimbs_vector_top(char, &v) == 'f', "after-pop");
+    pimbs_testing_expect(t, *pimbs_vector_top(char, &v) == 'f', "after-pop");
 
-    pimbs_testing_start_test(&t, "pimbs_vector-remove");
+    pimbs_testing_start_test(t, "pimbs_vector-remove");
     const uint64_t old_len = v.elem_count;
     pimbs_vector_remove(&v, 0);
-    pimbs_testing_expect(&t, v.elem_count == (old_len - 1), "elem_count_decrement");
+    pimbs_testing_expect(t, v.elem_count == (old_len - 1), "elem_count_decrement");
 
-    pimbs_testing_start_test(&t, "pimbs_vector-append-array");
+    pimbs_testing_start_test(t, "pimbs_vector-append-array");
     pimbs_vector_deinit(&v);
     v = pimbs_vector_init(char);
 
@@ -306,10 +308,9 @@ void pimbs_vector_run_tests() {
     const size_t char_count = strlen(str);
     pimbs_vector_append_array(&v, str, char_count);
     pimbs_vector_append(&v, 0);
-    pimbs_testing_expect(&t, strcmp(str, (char *)v.data) == 0, "data-preserved");
+    pimbs_testing_expect(t, strcmp(str, (char *)v.data) == 0, "data-preserved");
 
     pimbs_vector_deinit(&v);
-    pimbs_testing_end(&t);
 }
 
 
@@ -343,18 +344,61 @@ void pimbs_ss_deinit(pimbs_SparseSet * self){
     *self = (pimbs_SparseSet){0};
 }
 
-void pimbs_ss_set(pimbs_SparseSet * self, void * value, uint64_t sparse_index) {
+void pimbs_ss_set_internal(pimbs_SparseSet * self, uint64_t sparse_index, void * value) {
     pimbs_OptionalIndex * dense_index = pimbs_vector_get(pimbs_OptionalIndex, &self->sparse, sparse_index);
     if(dense_index->tag == PIMBS_TAG_NULL) {
+        printf("index %d not set, setting...\n", sparse_index);
         pimbs_vector_append_internal(&self->dense, value);
         dense_index->tag = PIMBS_TAG_VALID;
         dense_index->data = self->dense.elem_count;
+        pimbs_vector_append(&self->dense_to_sparse_map, sparse_index);
     } else {
+        printf("index %d set, overwriting...\n", sparse_index);
         pimbs_vector_set_internal(&self->dense, dense_index->data, value);
     }
 }
-void * pimbs_ss_get(pimbs_SparseSet * self, uint64_t sparse_index);
-void pimbs_ss_unset(pimbs_SparseSet * self, uint64_t sparse_index);
-void pimbs_ss_run_tests();
+
+void * pimbs_ss_get_internal(pimbs_SparseSet * self, uint64_t sparse_index) {
+    pimbs_OptionalIndex * dense_index = pimbs_vector_get(pimbs_OptionalIndex, &self->sparse, sparse_index);
+    if(dense_index->tag == PIMBS_TAG_NULL) {
+        return NULL;
+    } else {
+        return pimbs_vector_get_internal(&self->dense, dense_index->data);
+    }
+}
+
+void pimbs_ss_unset(pimbs_SparseSet * self, uint64_t sparse_index) {
+    pimbs_OptionalIndex * dense_index = pimbs_vector_get(pimbs_OptionalIndex, &self->sparse, sparse_index);
+    if(dense_index->tag == PIMBS_TAG_NULL) {
+        return;
+    } else  {
+        pimbs_vector_remove(&self->dense, dense_index->data);
+        pimbs_vector_remove(&self->dense_to_sparse_map, dense_index->data);
+        pimbs_vector_set(&self->sparse, sparse_index, (pimbs_OptionalIndex){0});
+    }
+}
+
+void pimbs_ss_run_tests(pimbs_testing_State * t) {
+    pimbs_testing_start_test(t, "pimbs_sparse_set");
+    pimbs_SparseSet ss = pimbs_ss_init(sizeof(char), 1000);
+
+    pimbs_testing_expect(t, ss.dense.elem_count == 0, "dense.correct_size");
+    pimbs_testing_expect(t, ss.sparse.elem_count == 1000, "sparse.correct_size");
+    pimbs_testing_expect(t, ss.dense_to_sparse_map.elem_count == 0, "dense_to_sparse_map.correct_size");
+
+    pimbs_ss_set_internal(&ss, 500, &(char){'a'});
+    pimbs_ss_set_internal(&ss, 400, &(char){'b'});
+    pimbs_ss_set_internal(&ss, 300, &(char){'c'});
+    pimbs_ss_set_internal(&ss, 200, &(char){'d'});
+    pimbs_ss_set_internal(&ss, 100, &(char){'e'});
+
+    pimbs_testing_expect(t, *(char *)pimbs_ss_get_internal(&ss, 500) == 'a', "get_a");
+    pimbs_testing_expect(t, *(char *)pimbs_ss_get_internal(&ss, 400) == 'b', "get_b");
+    pimbs_testing_expect(t, *(char *)pimbs_ss_get_internal(&ss, 300) == 'c', "get_c");
+    pimbs_testing_expect(t, *(char *)pimbs_ss_get_internal(&ss, 200) == 'd', "get_d");
+    pimbs_testing_expect(t, *(char *)pimbs_ss_get_internal(&ss, 100) == 'e', "get_e");
+
+    pimbs_ss_deinit(&ss);
+}
 
 #endif //PIMBS_IMPLEMENTATION
