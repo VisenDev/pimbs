@@ -453,4 +453,52 @@ void pimbs_ss_run_tests(pimbs_testing_State * t) {
     pimbs_ss_deinit(ss);
 }
 
+//=======================PIMBS STRING======================
+typedef struct {
+    pimbs_Vector bytes;
+} pimbs_String;
+
+
+
+
+//=======================PIMBS JSON=========================
+typdef struct {
+    pimbs_Vector * bytes;
+    pimbs_Vector * status_stack;
+    bool prepend_comma;
+    enum {PIMBS_JSON_ARRAY, PIMBS_JSON_OBJECT} status;
+} pimbs_Json;
+
+void pimbs_json_insert_key(pimbs_Json * self, const char * key) {
+    pimbs_assert("%s", self->status, ==, PIMBS_JSON_OBJECT); 
+    if(self->prepend_comma) {
+        pimbs_vector_append_array(self->bytes, ",\n", 2);
+        self->prepend_comma = false;
+    }
+    pimbs_vector_append_array(self->bytes, "\"", 1);
+    pimbs_vector_append_array(self->bytes, key, strlen(key));
+    pimbs_vector_append_array(self->bytes, "\": ", 3);
+}
+
+void pimbs_json_insert_value_string(pimbs_Json * self, const char * string) {
+    self->prepend_comma = true;
+
+    pimbs_vector_append_array(self->bytes, "\"", 1);
+    pimbs_vector_append_array(self->bytes, string, strlen(string));
+    pimbs_vector_append_array(self->bytes, "\"\n", 2);
+}
+
+void pimbs_json_enter_object(pimbs_Json * self) {
+    pimbs_vector_append_array(self->bytes, "{", 1);
+   //pimbs_vector_append(self->bytes, '"');
+   //pimbs_vector_append_array(self->bytes, scope_name, strlen(scope_name));
+   //pimbs_vector_append(self->bytes, '"');
+   //pimbs_vector_append(self->bytes, ':');
+}
+
+void pimbs_json_exit_object(pimbs_Json * self) {
+   pimbs_vector_append_array(self->bytes, "}", 1);
+}
+
+
 #endif //PIMBS_IMPLEMENTATION
