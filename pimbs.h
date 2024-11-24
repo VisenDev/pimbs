@@ -30,7 +30,7 @@
                     ")\n", #lhs, #operator, #rhs \
             ); \
             printf( \
-                    ANSI_COLOR_YELLOW"  in %s line %d\n"ANSI_COLOR_RESET, \
+                    "  in"ANSI_COLOR_YELLOW"%s line %d\n"ANSI_COLOR_RESET, \
                     __FILE__, __LINE__); \
             printf( \
                     "  note: \n    " \
@@ -88,6 +88,26 @@ void pimbs_vector_append_array(pimbs_Vector * self, const void * values, size_t 
 void pimbs_vector_remove(pimbs_Vector * self, uint64_t index);
 void pimbs_vector_pop(pimbs_Vector * self);
 void pimbs_vector_run_tests(pimbs_testing_State*);
+
+
+//======================SPARSE SET==============================
+typedef struct {
+    pimbs_Vector * dense;
+    pimbs_Vector * sparse;
+    pimbs_Vector * dense_to_sparse_map;
+} pimbs_SparseSet;
+
+typedef struct {
+    enum {PIMBS_TAG_NULL, PIMBS_TAG_VALID} tag;
+    uint64_t data;
+} pimbs_OptionalIndex;
+
+pimbs_SparseSet * pimbs_ss_init(size_t elem_size_bytes, uint64_t initial_capacity);
+void pimbs_ss_deinit(pimbs_SparseSet * self);
+void pimbs_ss_run_tests(pimbs_testing_State * t);
+void pimbs_ss_unset(pimbs_SparseSet * self, uint64_t sparse_index);
+void * pimbs_ss_get(pimbs_SparseSet * self, uint64_t sparse_index);
+void pimbs_ss_set(pimbs_SparseSet * self, uint64_t sparse_index, void * value);
 
 #endif //PIMBS_H
 
@@ -330,17 +350,6 @@ void pimbs_vector_run_tests(pimbs_testing_State * t) {
 }
 
 //======================SPARSE SET==============================
-typedef struct {
-    pimbs_Vector * dense;
-    pimbs_Vector * sparse;
-    pimbs_Vector * dense_to_sparse_map;
-} pimbs_SparseSet;
-
-typedef struct {
-    enum {PIMBS_TAG_NULL, PIMBS_TAG_VALID} tag;
-    uint64_t data;
-} pimbs_OptionalIndex;
-
 pimbs_SparseSet * pimbs_ss_init(size_t elem_size_bytes, uint64_t initial_capacity) {
    pimbs_SparseSet * result = malloc(sizeof(pimbs_SparseSet));
    *result = (pimbs_SparseSet){
