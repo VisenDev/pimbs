@@ -7,6 +7,8 @@ int main() {
         pimbs_vector_run_tests(t);
         pimbs_ss_run_tests(t);
         pimbs_generic_run_tests(t);
+        pimbs_ll_run_tests(t);
+        pimbs_hashset_run_tests(t);
     }
     pimbs_testing_deinit(t);
 }

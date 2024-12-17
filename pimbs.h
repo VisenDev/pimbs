@@ -133,6 +133,7 @@ static void pimbs_testing_print_header(const char * str) {
         printf("=");
     }
     printf("\n");
+    fflush(stdout);
 }
 
 static void pimbs_testing_print_summary(const pimbs_testing_Tracker tracker) {
@@ -463,6 +464,7 @@ typedef struct {
 } pimbs_Type;
 
 bool pimbs_equal_type(pimbs_Type lhs, pimbs_Type rhs) {
+    printf("lhs: %s, rhs: %s\n", lhs.name, rhs.name);
     return (lhs.byte_count == rhs.byte_count)
         && (strncmp(lhs.name, rhs.name, 32) == 0);
 }
@@ -493,7 +495,7 @@ void pimbs_generic_deinit(pimbs_Generic * value) {
     pimbs_generic_init(PIMBS_TYPE(gtype), &(gtype){gvalue})
 
 void * pimbs_generic_extract(pimbs_Type type, pimbs_Generic * value) {
-    assert(pimbs_equal_type(type, value->type));
+    pimbs_assert("%d", pimbs_equal_type(type, value->type), ==, 1);
     return value->value;
 }
 
@@ -559,6 +561,59 @@ pimbs_LinkedListNode * pimbs_llnode_insert
     return result;
 }
 
+//recursively frees all nodes
+void pimbs_ll_free(pimbs_LinkedListNode * node) {
+    if(node->value) {
+        pimbs_generic_deinit(node->value);
+        node->value = NULL;
+    }
+
+    if(node->next) {
+        node->next->prev= NULL;
+        pimbs_ll_free(node->next);
+    }
+
+    if(node->prev) {
+        node->prev->next = NULL;
+        pimbs_ll_free(node->prev);
+    }
+
+    free(node);
+}
+
+
+void pimbs_ll_run_tests(pimbs_testing_State * t) {
+    pimbs_testing_start_test(t, "pimbs.linked_list");
+    
+    pimbs_Generic * data1 = PIMBS_GENERIC(int, 10);
+    pimbs_Generic * data2 = PIMBS_GENERIC(int, 20);
+    pimbs_Generic * data3 = PIMBS_GENERIC(int, 30);
+    pimbs_Generic * data4 = PIMBS_GENERIC(int, 40);
+    pimbs_Generic * data5 = PIMBS_GENERIC(int, 50);
+
+    pimbs_LinkedListNode * node = pimbs_llnode_insert(data1, NULL, NULL);
+    pimbs_LinkedListNode * start = node;
+
+    if(false) {
+        deferred:
+        pimbs_ll_free(start);
+        return;
+    }
+
+    node = pimbs_llnode_insert(data2, NULL, node);
+    node = pimbs_llnode_insert(data3, NULL, node);
+    node = pimbs_llnode_insert(data4, NULL, node);
+    node = pimbs_llnode_insert(data5, NULL, node);
+
+    pimbs_testing_expect(t, PIMBS_EXTRACT(int, start->value) == 10);
+    pimbs_testing_expect(t, PIMBS_EXTRACT(int, start->next->value) == 20);
+    pimbs_testing_expect(t, PIMBS_EXTRACT(int, start->next->next->value) == 30);
+    pimbs_testing_expect(t, PIMBS_EXTRACT(int, start->next->next->next->value) == 40);
+    pimbs_testing_expect(t, PIMBS_EXTRACT(int, start->next->next->next->next->value) == 50);
+
+    goto deferred;
+}
+
 //=======================PIMBS HASHSET======================
 
 static uint64_t pimbs_djbt2_hash(const unsigned char *str, const size_t maxlen) {
@@ -587,6 +642,11 @@ pimbs_HashKey pimbs_hashkey_init(const char const * str) {
     return result;
 }
 
+bool pimbs_hashkey_equal(pimbs_HashKey * const lhs, pimbs_HashKey * const rhs) {
+    return (lhs->len == rhs->len)
+        && (strncmp((char const *)&lhs->str, (char const *)&rhs->str, MAX_KEY_LEN) == 0);
+}
+
 
 static uint64_t pimbs_hash(pimbs_HashKey key) {
     return pimbs_djbt2_hash((char *)&key.str, key.len);
@@ -596,21 +656,114 @@ typedef struct {
     pimbs_Vector * values;
     pimbs_Vector * keys;
     pimbs_SparseSet * value_indexes;
+    uint64_t modulus;
 } pimbs_HashSet;
 
 pimbs_HashSet * pimbs_hashset_init(const size_t elem_size_bytes) {
     pimbs_HashSet * result = malloc(sizeof(pimbs_HashSet));
     result->values = pimbs_vector_init(elem_size_bytes); 
     result->keys = pimbs_vector_init(sizeof(pimbs_HashKey));
-    result->value_indexes = pimbs_ss_init(sizeof(uint64_t), 128);
+    result->modulus = 256;
+    result->value_indexes = pimbs_ss_init(sizeof(pimbs_LinkedListNode *), result->modulus);
     return result;
 }
 
-void pimbs_hashset_put(const pimbs_HashSet * set, const char * const key, const void * value) {
+void pimbs_hashset_put(const pimbs_HashSet * set, char * const key, void * value) {
+
+    //HASHING THE KEY
     const size_t keylen = strnlen(key, MAX_KEY_LEN + 1);
     pimbs_assert("%z", keylen, <=, MAX_KEY_LEN);
     const pimbs_HashKey hashkey = pimbs_hashkey_init(key);
+
+    printf("Inserting key %s\n", hashkey.str);
+
+    const uint64_t hash = pimbs_hash(hashkey);
+    uint64_t index = hash % set->modulus;
+
+    printf("Calculating hash: %llu\n", hash);
+    printf("Hash modulus %llu: %llu\n", set->modulus, index);
      
+    //Find where the value will go and set it
+    const uint64_t values_array_index = set->values->elem_count;
+    printf("Appending new value to: %d\n", values_array_index);
+
+    pimbs_vector_append(set->values, value);
+    pimbs_vector_append(set->keys, &hashkey);
+
+    //printf("Appending new value to: %d\n", values_array_index);
+
+    //Set up the linked list node
+    pimbs_LinkedListNode * next = pimbs_ss_get(set->value_indexes, index);
+    printf("Current node at values_index[%llu]: %p\n", index, next);
+
+    const pimbs_Generic * node_value = PIMBS_GENERIC(uint64_t, values_array_index);
+    printf("New node value: %llu\n", PIMBS_EXTRACT(uint64_t, node_value));
+
+    const pimbs_LinkedListNode * node = pimbs_llnode_insert(node_value, next, NULL);
+
+
+    //Inset a new value into the sparse set if node exists
+    if(next == NULL) {
+        pimbs_ss_set(set->value_indexes, index, node);
+    }
+}
+
+void * pimbs_hashset_get(const pimbs_HashSet * set, char * const key) {
+
+    const size_t keylen = strnlen(key, MAX_KEY_LEN + 1);
+    pimbs_assert("%z", keylen, <=, MAX_KEY_LEN);
+    const pimbs_HashKey hashkey = pimbs_hashkey_init(key);
+
+    printf("LINE: %d\n", __LINE__);
+
+    const uint64_t hash = pimbs_hash(hashkey);
+    uint64_t index = hash % set->modulus;
+
+
+    printf("LINE: %d\n", __LINE__);
+
+    pimbs_LinkedListNode * node = pimbs_ss_get(set->value_indexes, index);
+    for(;node != NULL && node->next != NULL; node = node->next) {
+
+        printf("LINE: %d\n", __LINE__);
+        //const pimbs_Generic * node_value = node->value;
+        const uint64_t node_index = PIMBS_EXTRACT(uint64_t, node->value);
+
+        printf("LINE: %d\n", __LINE__);
+        const pimbs_HashKey * node_index_hashkey = pimbs_vector_get(set->keys, node_index);
+
+        printf("LINE: %d\n", __LINE__);
+        if(pimbs_hashkey_equal(&hashkey, node_index_hashkey)) {
+
+        printf("LINE: %d\n", __LINE__);
+            return pimbs_vector_get(set->values, node_index);
+        } 
+
+        printf("LINE: %d\n", __LINE__);
+    }
+
+    return NULL;
+    
+}
+
+
+void pimbs_hashset_run_tests(pimbs_testing_State * t) {
+    pimbs_testing_start_test(t, "pimbs.hashset.init");
+    pimbs_HashSet * h = pimbs_hashset_init(sizeof(int));
+
+    if(false) {
+        deferred:
+        /* cleanup here */
+        return;
+    }
+
+    pimbs_testing_start_test(t, "pimbs.hashset.put");
+    pimbs_hashset_put(h, "hello", &(int){10});
+    
+    pimbs_testing_start_test(t, "pimbs.hashset.get");
+    pimbs_testing_expect(t, *(int*)pimbs_hashset_get(h, "hello") == 10);
+
+    goto deferred;
 }
 
 //=======================PIMBS ECS======================
