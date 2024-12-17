@@ -22,23 +22,23 @@
         typeof(lhs) rhs_copy = rhs; \
         if(!(lhs_copy operator rhs_copy)) { \
             printf( \
-                    ANSI_COLOR_RED "\n[Assertion Failure]"ANSI_COLOR_RESET \
+                    ANSI_COLOR_RED "\n[Assertion Failure]" ANSI_COLOR_RESET \
                     " assert(" \
-                    ANSI_COLOR_YELLOW"%s"ANSI_COLOR_RESET \
+                    ANSI_COLOR_YELLOW "%s" ANSI_COLOR_RESET \
                     " %s "\
-                    ANSI_COLOR_YELLOW"%s"ANSI_COLOR_RESET \
+                    ANSI_COLOR_YELLOW "%s" ANSI_COLOR_RESET \
                     ")\n", #lhs, #operator, #rhs \
             ); \
             printf( \
-                    "  in"ANSI_COLOR_YELLOW"%s line %d\n"ANSI_COLOR_RESET, \
+                    "  in" ANSI_COLOR_YELLOW "%s line %d\n" ANSI_COLOR_RESET, \
                     __FILE__, __LINE__); \
             printf( \
                     "  note: \n    " \
-                    ANSI_COLOR_YELLOW"%s"ANSI_COLOR_RESET \
+                    ANSI_COLOR_YELLOW "%s" ANSI_COLOR_RESET \
                     " = " \
                     ANSI_COLOR_RED format_specifier ANSI_COLOR_RESET \
                     " \n    " \
-                    ANSI_COLOR_YELLOW"%s"ANSI_COLOR_RESET \
+                    ANSI_COLOR_YELLOW "%s" ANSI_COLOR_RESET \
                     " = " \
                     ANSI_COLOR_RED format_specifier ANSI_COLOR_RESET \
                     "\n", #lhs, lhs_copy, #rhs, rhs_copy \
@@ -195,7 +195,7 @@ static void pimbs_vector_audit(pimbs_Vector * self)
 {
     pimbs_assert("%s", self->data, !=, NULL);
     pimbs_assert("%zu", self->elem_size_bytes, >, 0);
-    pimbs_assert("%lu",self->elem_count, <=, self->elem_capacity);
+    pimbs_assert("%llu",self->elem_count, <=, self->elem_capacity);
 }
 
 static bool pimbs_vector_has_capacity_for(pimbs_Vector * self, uint64_t item_count)
@@ -218,7 +218,7 @@ static void pimbs_vector_double_capacity(pimbs_Vector * self)
 void * pimbs_vector_get(pimbs_Vector * self, const uint64_t index)
 {
     pimbs_vector_audit(self);
-    pimbs_assert("%lu", index, <, self->elem_count);
+    pimbs_assert("%llu", index, <, self->elem_count);
     return self->data + (index * self->elem_size_bytes);
 }
 
@@ -247,7 +247,7 @@ pimbs_Vector * pimbs_vector_init(const size_t elem_size_bytes)
 void pimbs_vector_set(pimbs_Vector * self, uint64_t index, void * value)
 {
     pimbs_vector_audit(self);
-    pimbs_assert("%lu", index, <, self->elem_count);
+    pimbs_assert("%llu", index, <, self->elem_count);
     memcpy(pimbs_vector_get(self, index), value, self->elem_size_bytes);
 }
 
@@ -285,7 +285,7 @@ void * pimbs_vector_top(pimbs_Vector * self) {
 void pimbs_vector_remove(pimbs_Vector * self, uint64_t index)
 {
     pimbs_vector_audit(self);
-    pimbs_assert("%lu", index, <, self->elem_count);
+    pimbs_assert("%llu", index, <, self->elem_count);
 
     void * top = pimbs_vector_top(self);
     pimbs_vector_set(self, index, top);
@@ -453,16 +453,72 @@ void pimbs_ss_run_tests(pimbs_testing_State * t) {
     pimbs_ss_deinit(ss);
 }
 
-//=======================PIMBS STRING======================
+
+//=======================PIMBS HASHSET======================
+
+//Inspired by djbt2 by Dan Bernstein - http://www.cse.yorku.ca/~oz/hash.html
+static uint64_t pimbs_djbt2_hash(const unsigned char *str, const size_t maxlen) {
+    uint64_t hash = 5381;
+    uint64_t c = 0;
+
+    for(size_t i = 0; (i < maxlen) && (str[i] != 0); ++i) {
+        hash = ((hash << 5) + hash) + c; /* hash * 33 + c */
+    }
+
+    return hash;
+}
+
+
+#define MAX_KEY_LEN 16
 typedef struct {
-    pimbs_Vector bytes;
-} pimbs_String;
+    char str[MAX_KEY_LEN]; 
+    size_t len;
+} pimbs_HashKey;
+
+pimbs_HashKey pimbs_hashkey_init(const char const * str) {
+    pimbs_HashKey result = {0};
+    result.len = strnlen(str, MAX_KEY_LEN);
+    strncpy((char*)&result.str, str, result.len);
+    return result;
+}
+
+
+static uint64_t pimbs_hash(pimbs_HashKey key) {
+    return pimbs_djbt2_hash((char *)&key.str, key.len);
+}
+
+typedef struct {
+    pimbs_Vector * values;
+    pimbs_Vector * keys;
+    pimbs_SparseSet * value_indexes;
+} pimbs_HashSet;
+
+pimbs_HashSet * pimbs_hashset_init(const size_t elem_size_bytes) {
+    pimbs_HashSet * result = malloc(sizeof(pimbs_HashSet));
+    result->values = pimbs_vector_init(elem_size_bytes), 
+    result->keys = pimbs_vector_init(sizeof(pimbs_HashKey)), 
+    result->value_indexes = pimbs_ss_init(sizeof(uint64_t), 128),
+    return result
+}
+
+void pimbs_hashset_put(const pimbs_HashSet * set, const char * const key, const void * value) {
+    const size_t keylen = strnlen(key, MAX_KEY_LEN + 1);
+    pimbs_assert("%z", keylen, <=, MAX_KEY_LEN);
+    const pimbs_HashKey hashkey = pimbs_hashkey_init(key);
+     
+}
+
+//=======================PIMBS ECS======================
+
+//typedef struct {
+//
+//}
 
 
 
 
 //=======================PIMBS JSON=========================
-typdef struct {
+typedef struct {
     pimbs_Vector * bytes;
     pimbs_Vector * status_stack;
     bool prepend_comma;
@@ -470,7 +526,7 @@ typdef struct {
 } pimbs_Json;
 
 void pimbs_json_insert_key(pimbs_Json * self, const char * key) {
-    pimbs_assert("%s", self->status, ==, PIMBS_JSON_OBJECT); 
+    pimbs_assert("%i", self->status, ==, PIMBS_JSON_OBJECT); 
     if(self->prepend_comma) {
         pimbs_vector_append_array(self->bytes, ",\n", 2);
         self->prepend_comma = false;
