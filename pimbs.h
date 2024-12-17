@@ -6,6 +6,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <assert.h>
 
 #define ANSI_COLOR_RED     "\x1b[31m"
 #define ANSI_COLOR_GREEN   "\x1b[32m"
@@ -454,10 +455,114 @@ void pimbs_ss_run_tests(pimbs_testing_State * t) {
 }
 
 
+//=======================PIMBS GENERIC==================
+
+typedef struct {
+    size_t byte_count;
+    const char * name;
+} pimbs_Type;
+
+bool pimbs_equal_type(pimbs_Type lhs, pimbs_Type rhs) {
+    return (lhs.byte_count == rhs.byte_count)
+        && (strncmp(lhs.name, rhs.name, 32) == 0);
+}
+
+#define PIMBS_TYPE(type) \
+   (pimbs_Type){.byte_count = sizeof(type), .name = (const char*)#type}
+
+typedef struct {
+    pimbs_Type type;
+    char * value;
+} pimbs_Generic;
+
+pimbs_Generic * pimbs_generic_init(pimbs_Type type, char * value) {
+    pimbs_Generic * result = malloc(sizeof(pimbs_Generic));
+    result->value = malloc(type.byte_count); 
+    memcpy(result->value, value, type.byte_count);
+    result->type = type;
+    return result;
+}
+
+void pimbs_generic_deinit(pimbs_Generic * value) {
+    free(value->value);
+    free(value);
+}
+
+
+#define PIMBS_GENERIC(gtype, gvalue) \
+    pimbs_generic_init(PIMBS_TYPE(gtype), &(gtype){gvalue})
+
+void * pimbs_generic_extract(pimbs_Type type, pimbs_Generic * value) {
+    assert(pimbs_equal_type(type, value->type));
+    return value->value;
+}
+
+#define PIMBS_EXTRACT(type, generic) \
+    *(type*)pimbs_generic_extract(PIMBS_TYPE(type), generic)
+
+
+void pimbs_generic_run_tests(pimbs_testing_State * t) {
+    pimbs_testing_start_test(t, "pimbs.generic.basic");
+    
+    pimbs_Generic * test1 = PIMBS_GENERIC(int, 10);
+    pimbs_Generic * test2 = PIMBS_GENERIC(int, 20);
+    pimbs_Generic * test3 = PIMBS_GENERIC(int, 30);
+    pimbs_Generic * test4 = PIMBS_GENERIC(short, 40);
+
+    if(false) {
+        deferred:
+        pimbs_generic_deinit(test1);
+        pimbs_generic_deinit(test2);
+        pimbs_generic_deinit(test3);
+        pimbs_generic_deinit(test4);
+        return;
+    }
+
+    pimbs_testing_expect(t,  pimbs_equal_type(test1->type, test2->type));
+    pimbs_testing_expect(t,  pimbs_equal_type(test2->type, test3->type));
+    pimbs_testing_expect(t,  pimbs_equal_type(test1->type, test3->type));
+    pimbs_testing_expect(t, !pimbs_equal_type(test1->type, test4->type));
+
+    pimbs_testing_start_test(t, "pimbs.generic.extract");
+    pimbs_testing_expect(t, PIMBS_EXTRACT(int, test1) == 10);
+    pimbs_testing_expect(t, PIMBS_EXTRACT(int, test2) == 20);
+    pimbs_testing_expect(t, PIMBS_EXTRACT(int, test3) == 30);
+    pimbs_testing_expect(t, PIMBS_EXTRACT(short, test4) == 40);
+
+    goto deferred;
+}
+
+
+
+//=======================PIMBS LINKED LIST==================
+
+typedef struct pimbs_LinkedList {
+    pimbs_Generic * value;
+    struct pimbs_LinkedList * next;
+    struct pimbs_LinkedList * prev;
+} pimbs_LinkedListNode;
+
+pimbs_LinkedListNode * pimbs_llnode_insert
+(pimbs_Generic * value, pimbs_LinkedListNode * next, pimbs_LinkedListNode * prev) {
+    pimbs_LinkedListNode * result = malloc(sizeof(pimbs_LinkedListNode)); 
+    result->value = value;
+    result->next = next;
+    result->prev = prev;
+
+    if(next) {
+        next->prev = result;
+    }
+
+    if(prev) {
+        prev->next= result;
+    }
+    return result;
+}
+
 //=======================PIMBS HASHSET======================
 
-//Inspired by djbt2 by Dan Bernstein - http://www.cse.yorku.ca/~oz/hash.html
 static uint64_t pimbs_djbt2_hash(const unsigned char *str, const size_t maxlen) {
+    //Inspired by djbt2 by Dan Bernstein - http://www.cse.yorku.ca/~oz/hash.html
     uint64_t hash = 5381;
     uint64_t c = 0;
 
@@ -495,10 +600,10 @@ typedef struct {
 
 pimbs_HashSet * pimbs_hashset_init(const size_t elem_size_bytes) {
     pimbs_HashSet * result = malloc(sizeof(pimbs_HashSet));
-    result->values = pimbs_vector_init(elem_size_bytes), 
-    result->keys = pimbs_vector_init(sizeof(pimbs_HashKey)), 
-    result->value_indexes = pimbs_ss_init(sizeof(uint64_t), 128),
-    return result
+    result->values = pimbs_vector_init(elem_size_bytes); 
+    result->keys = pimbs_vector_init(sizeof(pimbs_HashKey));
+    result->value_indexes = pimbs_ss_init(sizeof(uint64_t), 128);
+    return result;
 }
 
 void pimbs_hashset_put(const pimbs_HashSet * set, const char * const key, const void * value) {
