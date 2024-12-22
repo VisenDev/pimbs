@@ -17,10 +17,16 @@
 #include "vec.h"
 
 
+#define LIST_IMPLEMENTATION
+#define LIST_NAME list
+#define LIST_TYPE int 
+#include "list.h"
+
+
 int main(void) {
     TestingState t = testing_init();
-    Allocator child = libc_allocator();
-    Allocator a = logging_allocator(&child);
+    Allocator a = libc_allocator();
+    //Allocator a = logging_allocator(&child);
 
     testing_start_test(&t, "vec");
     {
@@ -35,6 +41,24 @@ int main(void) {
             }
         }
         vec_free(a, &v);
+    }
+
+
+    testing_start_test(&t, "list");
+    {
+        list * node = NULL;
+
+        for(int i = 0; i < 10000; ++i){
+            node = list_cons(a, i, node);
+        }
+        for(int i = 9999; i >= 0; --i){
+            if(i % 1000 == 0) {
+                testing_expect(&t, node->value == i);
+            }
+            node = node->next;
+        }
+
+        list_free(a, node);
     }
 
     testing_deinit(&t);

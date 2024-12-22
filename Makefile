@@ -22,8 +22,9 @@ ${TESTEXE}: all ${TESTFILE}
 	${CC} ${TESTFILE} ${OBJFILES} ${CFLAGS} ${DEPENDENCIES} -o ${TESTEXE}
 
 # Rule to build and run tests
+.PHONY: test
 test: ${TESTEXE} 
-	./${TESTEXE}
+	time ./${TESTEXE}
 
 # Clean rule
 .PHONY: clean
