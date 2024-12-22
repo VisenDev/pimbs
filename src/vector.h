@@ -4,15 +4,15 @@
 #define IMPLEMENT_VECTOR(Name, Type) \
 typedef struct { \
     Type * items; \
-    size_t len; \
-    size_t cap; \
+    unsigned int len; \
+    unsigned int cap; \
 } Name; \
 \
 Name Name##_init(Allocator a) { \
     return (Name){ \
-        .items = a.alloc(a.ctx, 4 * sizeof(Type)), \
+        .items = a.alloc(a.ctx, 1 * sizeof(Type)), \
         .len = 0, \
-        .cap = 4, \
+        .cap = 1, \
     }; \
 } \
 \
@@ -29,10 +29,18 @@ void Name##_append(Allocator a, Name * vec, Type value) { \
         vec->len += 1; \
     } else { \
         const size_t new_cap = (vec->cap + 1) * 2; \
-        a.realloc(a.ctx, vec->items, new_cap); \
+        vec->items = a.realloc(a.ctx, vec->items, new_cap * sizeof(Type)); \
         vec->cap = new_cap; \
         Name##_append(a, vec, value); \
     } \
 } \
+\
+Type * Name##_get(Name vec, unsigned int index) { \
+    if(index < vec.len) { \
+        return &vec.items[index]; \
+    } else { \
+        return NULL; \
+    } \
+}
 
 #endif //VECTOR_H

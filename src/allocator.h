@@ -13,5 +13,6 @@ typedef struct {
 } Allocator;
 
 Allocator libc_allocator();
+Allocator logging_allocator(Allocator *child);
 
 #endif //ALLOCATOR_H

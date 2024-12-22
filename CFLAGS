@@ -17,7 +17,6 @@
 -Wuninitialized
 -Winit-self
 -march=native
--O3
 -g
 -Wdouble-promotion
 -Wformat

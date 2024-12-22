@@ -1,21 +1,26 @@
 #ifndef SPARSE_SET_H
 #define SPARSE_SET_H
 
+#include "tui.h"
 #include "vector.h"
 #include "allocator.h"
+#include "assert.h"
 
 typedef struct {
     unsigned int sparse_index;
 } SparseIndex;
 
 typedef struct {
+    bool valid;
     unsigned int dense_index;
 } DenseIndex;
 
 #define IMPLEMENT_SPARSE_SET(Name, Type) \
+\
 IMPLEMENT_VECTOR(Name##SparseIndexVec, SparseIndex) \
 IMPLEMENT_VECTOR(Name##DenseIndexVec, DenseIndex) \
 IMPLEMENT_VECTOR(Name##Type##Vec, Type) \
+\
 typedef struct { \
     Name##Type##Vec dense; \
     Name##SparseIndexVec dense_to_sparse; \
@@ -31,18 +36,68 @@ Name Name##_init(Allocator a) { \
 } \
 \
 void Name##_deinit(Allocator a, Name * set) { \
-     Name##Type##Vec_free(a, set->dense); \
-     Name##SparseIndexVec_free(a, set->dense_to_sparse); \
-     Name##DenseIndexVec_free(a, set->sparse); \
+     Name##Type##Vec_free(a, &set->dense); \
+     Name##SparseIndexVec_free(a, &set->dense_to_sparse); \
+     Name##DenseIndexVec_free(a, &set->sparse); \
 } \
 \
-void Name##_set(Allocator a, Name * set, unsigned int index) { \
-    
-    
-    
+void Name##_expand_sparse(Allocator a, Name * set, unsigned int minimum_len) { \
+    while(set->sparse.len <= minimum_len + 1){\
+        Name##DenseIndexVec_append(a, &set->sparse, (DenseIndex){.valid = false}); \
+    } \
+} \
+\
+void Name##_set(Allocator a, Name * set, const unsigned int index, const Type value) { \
+    DenseIndex * dindex = Name##DenseIndexVec_get(set->sparse, index); \
+    if(dindex == NULL) { \
+        tui_printf("dense index at sparse %lu is null, expanding...\n", index); \
+        Name##_expand_sparse(a, set, index); \
+        Name##_set(a, set, index, value); \
+        return; \
+    } \
+    if(dindex->valid == false) { \
+        tui_printf("dense index at sparse %lu has not been set, setting...\n", index); \
+        dindex->valid = true; \
+        dindex->dense_index = set->dense.len; \
+        Name##Type##Vec_append(a, &set->dense, value); \
+        Name##SparseIndexVec_append(a, &set->dense_to_sparse, (SparseIndex){.sparse_index = index}); \
+        tui_printf("dense index at sparse %lu has been set to %p\n", index, Name##DenseIndexVec_get(set->sparse, index)); \
+    } else { \
+        tui_printf("dindex is valid\n"); \
+        assert(set->dense.len < dindex->dense_index); \
+        set->dense.items[dindex->dense_index] = value; \
+    } \
+    tui_printf("returning normally from set\n"); \
+} \
+\
+void Name##_unset(Name * set, unsigned int index) { \
+    DenseIndex * dindex = Name##DenseIndexVec_get(set->sparse, index); \
+    if(dindex == NULL) { \
+        return; \
+    } \
+    if(dindex->valid == false) { \
+        return; \
+    } \
+    Type top = set->dense.items[set->dense.len - 1]; \
+    SparseIndex top_index = set->dense_to_sparse.items[set->dense.len - 1]; \
+    set->dense.len -= 1; \
+    if(top_index.sparse_index != index) { \
+        set->dense.items[index] = top; \
+        set->sparse.items[top_index.sparse_index] = *dindex; \
+    } \
+} \
+\
+Type * Name##_get(Name set, unsigned int index) { \
+    tui_printf("getting set at sparse index %lu\n", index); \
+    DenseIndex * dindex = Name##DenseIndexVec_get(set.sparse, index); \
+    if(dindex == NULL) { \
+        return NULL; \
+    } \
+    if(dindex->valid == false) { \
+        return NULL; \
+    } \
+    return &set.dense.items[dindex->dense_index]; \
+} \
 
 
-
-
-
-#endif SPARSE_SET_H
+#endif //SPARSE_SET_H

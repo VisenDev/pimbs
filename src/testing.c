@@ -66,10 +66,12 @@ void testing_expect_internal(
         const char * file
 ) {
     if(condition) {
-        tui_printf(TUI_GREEN"testing.%s.%d... [PASSED]\n", state->active.name, state->active.passed + state->active.failed); 
+        tui_printf("testing.%s.%d... ", state->active.name, state->active.passed + state->active.failed); 
+        tui_printf(TUI_GREEN"[PASSED]\n");
         state->active.passed += 1;
     } else {
-        printf(TUI_RED"./testing.%s.%d... [FAILED]\n", state->active.name, state->active.passed + state->active.failed); 
+        printf("./testing.%s.%d... ", state->active.name, state->active.passed + state->active.failed); 
+        tui_printf(TUI_RED"[FAILED]\n");
         printf(TUI_RED"   -> %s:%i\n", file , line); 
         state->active.failed += 1;
     }
