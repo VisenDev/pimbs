@@ -29,8 +29,16 @@
 
 int main(void) {
     TestingState t = testing_init();
-    Allocator a = libc_allocator();
+    //Allocator a = libc_allocator();
     //Allocator a = logging_allocator(&child);
+    Allocator a = tsoding_arena_allocator();
+
+    if(false) {
+        cleanup:
+        testing_deinit(&t);
+        tsoding_arena_allocator_free(&a);
+        return 0;
+    }
 
     testing_start_test(&t, "vec");
     {
@@ -65,8 +73,7 @@ int main(void) {
         list_free(a, node);
     }
 
-    testing_deinit(&t);
-    return 0;
+    goto cleanup;
 }
 
 

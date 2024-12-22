@@ -17,5 +17,7 @@ typedef struct Allocator {
 
 Allocator libc_allocator(void);
 Allocator logging_allocator(Allocator *child);
+Allocator tsoding_arena_allocator(void);
+void tsoding_arena_allocator_free(Allocator *);
 
 #endif //ALLOCATOR_H

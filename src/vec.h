@@ -53,7 +53,16 @@ void CONCAT(VEC_NAME, _free) (Allocator a, VEC_NAME * self)
 int CONCAT(VEC_NAME, _ensure_capacity) (Allocator a, VEC_NAME * self, unsigned long capacity)
 #ifdef VEC_IMPLEMENTATION
 {
-    if(self->cap < capacity) {
+    if(self->items == NULL) {
+        VEC_TYPE * newmem = a.alloc(a, capacity * sizeof(VEC_TYPE));
+        if(newmem == NULL) {
+            return 1;
+        } else {
+            self->items = newmem;
+            self->cap = capacity;
+        }
+
+    } else if(self->cap < capacity) {
         VEC_TYPE * newmem = a.realloc(a, self->items, capacity * sizeof(VEC_TYPE));
         if(newmem == NULL) {
             return 1;
