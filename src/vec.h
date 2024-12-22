@@ -1,4 +1,5 @@
 #include "allocator.h"
+#include "concat.h"
 
 #ifndef VEC_TYPE 
 #error "VEC_TYPE must be defined before including <vector.h>"
@@ -8,9 +9,6 @@
 #error "VEC_NAME must be defined before including <vector.h>"
 #endif //VECTOR_TYPE
        
- // Indirection to force expansion
-#define CONCATENATE_DETAIL(x, y) x##y
-#define CONCAT(x, y) CONCATENATE_DETAIL(x, y)
 
 // Correct INIT macro using forced expansion
 //#define INIT(Name) CONCAT(Name, _init)      
@@ -18,7 +16,7 @@
 //#define APPEND(Name) CONCAT(Name, _append)      
 //#define GET(Name) CONCAT(Name, _get)      
 
-typedef struct {
+typedef struct VEC_NAME {
     VEC_TYPE * items;
     unsigned long len;
     unsigned long cap;
@@ -87,6 +85,21 @@ int CONCAT(VEC_NAME, _append) (Allocator a, VEC_NAME * self, VEC_TYPE value)
         self->len += 1;
         return 0;
     }
+}
+#else 
+;
+#endif
+
+int CONCAT(VEC_NAME, _append_n_times) (Allocator a, VEC_NAME * self, unsigned long times, VEC_TYPE value) 
+#ifdef VEC_IMPLEMENTATION
+{
+    for(unsigned long i = 0; i < times; ++i){
+        const int err = CONCAT(VEC_NAME, _append)(a, self, value);
+        if(err != 0) {
+            return err;
+        }
+    }
+    return 0;
 }
 #else 
 ;

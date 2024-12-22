@@ -16,11 +16,15 @@
 #define VEC_TYPE char
 #include "vec.h"
 
-
 #define LIST_IMPLEMENTATION
 #define LIST_NAME list
 #define LIST_TYPE int 
 #include "list.h"
+
+#define SSET_IMPLEMENTATION
+#define SSET_NAME sset
+#define SSET_TYPE int
+#include "sset.h"
 
 
 int main(void) {

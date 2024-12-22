@@ -1,16 +1,15 @@
 #include "allocator.h"
+#include "concat.h"
 
 #ifndef LIST_TYPE 
 #error "LIST_TYPE must be defined before including \"list.h\""
 #endif //LIST TYPE
        
 #ifndef LIST_NAME
-#error "LIST_NAME must be defined before including \"vector.h\""
+#error "LIST_NAME must be defined before including \"list.h\""
 #endif //LIST_NAME
        
- // Indirection to force expansion
-#define CONCATENATE_DETAIL(x, y) x##y
-#define CONCAT(x, y) CONCATENATE_DETAIL(x, y)
+
 
 typedef struct LIST_NAME {
     LIST_TYPE value;
