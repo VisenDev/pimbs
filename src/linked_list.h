@@ -9,7 +9,7 @@ struct Name##Struct { \
 typedef struct Name##Struct Name; \
 \
 Name * Name##_cons(Allocator a, Type value, Name* next) { \
-    Name * result = a.alloc(a.ctx, sizeof(Type)); \
+    Name * result = a.alloc(a.ctx, sizeof(Name)); \
     result->value = value; \
     result->next = next; \
     return result; \

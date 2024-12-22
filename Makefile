@@ -1,4 +1,4 @@
-CFLAGS=$(cat CFLAGS)
+CFLAGS=$(shell cat CFLAGS)
 DEPENDENCIES=
 SRCDIR=src
 CFILES=${SRCDIR}/allocator.c ${SRCDIR}/tui.c ${SRCDIR}/testing.c

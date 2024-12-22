@@ -17,7 +17,7 @@ void libc_free(void* ctx, void * mem) {
     free(mem); 
 }
 
-Allocator libc_allocator() {
+Allocator libc_allocator(void) {
     return (Allocator){
         .ctx = NULL,
         .alloc = &libc_alloc,
@@ -44,7 +44,7 @@ void* logging_realloc (void* ctx, void * old_mem, unsigned long new_byte_count) 
 void logging_free(void* ctx, void * mem) {
     Allocator * child = (Allocator *) ctx;
     tui_printf(TUI_YELLOW"Freeing %p via ctx %p\n", mem, ctx);
-    return child->free(child->ctx, mem);
+    child->free(child->ctx, mem);
 }
 
 Allocator logging_allocator(Allocator *child) {

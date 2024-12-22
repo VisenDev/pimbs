@@ -12,7 +12,7 @@ typedef struct {
     FreeFn free;
 } Allocator;
 
-Allocator libc_allocator();
+Allocator libc_allocator(void);
 Allocator logging_allocator(Allocator *child);
 
 #endif //ALLOCATOR_H

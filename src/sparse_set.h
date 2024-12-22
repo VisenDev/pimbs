@@ -7,12 +7,12 @@
 #include "assert.h"
 
 typedef struct {
-    unsigned int sparse_index;
+    unsigned long sparse_index;
 } SparseIndex;
 
 typedef struct {
     bool valid;
-    unsigned int dense_index;
+    unsigned long dense_index;
 } DenseIndex;
 
 #define IMPLEMENT_SPARSE_SET(Name, Type) \
@@ -50,24 +50,19 @@ void Name##_expand_sparse(Allocator a, Name * set, unsigned int minimum_len) { \
 void Name##_set(Allocator a, Name * set, const unsigned int index, const Type value) { \
     DenseIndex * dindex = Name##DenseIndexVec_get(set->sparse, index); \
     if(dindex == NULL) { \
-        tui_printf("dense index at sparse %lu is null, expanding...\n", index); \
         Name##_expand_sparse(a, set, index); \
         Name##_set(a, set, index, value); \
         return; \
     } \
     if(dindex->valid == false) { \
-        tui_printf("dense index at sparse %lu has not been set, setting...\n", index); \
         dindex->valid = true; \
         dindex->dense_index = set->dense.len; \
         Name##Type##Vec_append(a, &set->dense, value); \
         Name##SparseIndexVec_append(a, &set->dense_to_sparse, (SparseIndex){.sparse_index = index}); \
-        tui_printf("dense index at sparse %lu has been set to %p\n", index, Name##DenseIndexVec_get(set->sparse, index)); \
     } else { \
-        tui_printf("dindex is valid\n"); \
         assert(set->dense.len < dindex->dense_index); \
         set->dense.items[dindex->dense_index] = value; \
     } \
-    tui_printf("returning normally from set\n"); \
 } \
 \
 void Name##_unset(Name * set, unsigned int index) { \
@@ -85,10 +80,10 @@ void Name##_unset(Name * set, unsigned int index) { \
         set->dense.items[index] = top; \
         set->sparse.items[top_index.sparse_index] = *dindex; \
     } \
+    dindex->valid = false; \
 } \
 \
 Type * Name##_get(Name set, unsigned int index) { \
-    tui_printf("getting set at sparse index %lu\n", index); \
     DenseIndex * dindex = Name##DenseIndexVec_get(set.sparse, index); \
     if(dindex == NULL) { \
         return NULL; \

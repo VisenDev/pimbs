@@ -12,7 +12,7 @@ typedef struct {
     TestingTracker active;
 } TestingState;
 
-TestingState testing_init();
+TestingState testing_init(void);
 void testing_deinit(TestingState * state);
 void testing_start_test(TestingState * state, const char* test_name);
 #define testing_expect(state, condition) testing_expect_internal(state, condition, __LINE__, __FILE__)

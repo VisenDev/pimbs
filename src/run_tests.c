@@ -6,11 +6,11 @@
 #include "linked_list.h"
 #include "sparse_set.h"
 
-IMPLEMENT_VECTOR(vec, int)
+IMPLEMENT_VECTOR(vec, unsigned long)
 IMPLEMENT_LINKED_LIST(list, int)
 IMPLEMENT_SPARSE_SET(set, char)
 
-int main() {
+int main(void) {
     TestingState t = testing_init();
     //Allocator child = libc_allocator();
     //Allocator a = logging_allocator(&child);
@@ -20,12 +20,12 @@ int main() {
     {
         testing_start_test(&t, "vector");
         vec v = vec_init(a);
-        for(int i = 0; i < 100000; ++i) {
+        for(unsigned long i = 0; i < 100000; ++i) {
             vec_append(a, &v, i);
         }
 
-        for(int i = 0; i < 100000; ++i) {
-            if(i % 1000 == 0) {
+        for(unsigned long i = 0; i < 100000; ++i) {
+            if(i % 10000 == 0) {
                 testing_expect(&t, *vec_get(v, i) == i);
             }
         }
@@ -43,7 +43,7 @@ int main() {
 
         list * node = start;
         for(int i = 99999; i >= 0; --i) {
-            if(i % 1000 == 0) {
+            if(i % 10000 == 0) {
                 testing_expect(&t, node->value == i);
             }
             node = node->next;
@@ -80,6 +80,13 @@ int main() {
         testing_expect(&t, *set_get(s, 30) == 'c');
         testing_expect(&t, *set_get(s, 40) == 'd');
         testing_expect(&t, *set_get(s, 50) == 'e');
+
+        set_unset(&s, 50);
+        testing_expect(&t, *set_get(s, 10) == 'a');
+        testing_expect(&t, *set_get(s, 20) == 'b');
+        testing_expect(&t, *set_get(s, 30) == 'c');
+        testing_expect(&t, *set_get(s, 40) == 'd');
+        testing_expect(&t, set_get(s, 50) == NULL);
 
         set_deinit(a, &s);
     }

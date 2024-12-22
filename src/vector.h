@@ -4,8 +4,8 @@
 #define IMPLEMENT_VECTOR(Name, Type) \
 typedef struct { \
     Type * items; \
-    unsigned int len; \
-    unsigned int cap; \
+    unsigned long len; \
+    unsigned long cap; \
 } Name; \
 \
 Name Name##_init(Allocator a) { \
@@ -35,7 +35,7 @@ void Name##_append(Allocator a, Name * vec, Type value) { \
     } \
 } \
 \
-Type * Name##_get(Name vec, unsigned int index) { \
+Type * Name##_get(Name vec, unsigned long index) { \
     if(index < vec.len) { \
         return &vec.items[index]; \
     } else { \

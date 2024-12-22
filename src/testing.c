@@ -32,7 +32,7 @@ static void testing_print_summary(const TestingTracker tracker) {
 }
 
 
-TestingState testing_init() {
+TestingState testing_init(void) {
     return (TestingState) {
         .overall = (TestingTracker){.name = "SUMMARY"},
         .active = {0},
