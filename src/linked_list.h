@@ -16,10 +16,11 @@ Name * Name##_cons(Allocator a, Type value, Name* next) { \
 } \
 \
 void Name##_free(Allocator a, Name* node) { \
-    if(node->next) { \
-       Name##_free(a, node->next); \
-    } \
+    Name * next = node->next; \
     a.free(a.ctx, node); \
+    if(next) { \
+       Name##_free(a, next); \
+    } \
 } \
 
 #endif //LINkED_LIST_H

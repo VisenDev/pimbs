@@ -73,11 +73,11 @@ void Name##_unset(Name * set, unsigned int index) { \
     if(dindex->valid == false) { \
         return; \
     } \
-    Type top = set->dense.items[set->dense.len - 1]; \
     SparseIndex top_index = set->dense_to_sparse.items[set->dense.len - 1]; \
     set->dense.len -= 1; \
     if(top_index.sparse_index != index) { \
-        set->dense.items[index] = top; \
+        Type top = set->dense.items[set->dense.len]; \
+        set->dense.items[dindex->dense_index] = top; \
         set->sparse.items[top_index.sparse_index] = *dindex; \
     } \
     dindex->valid = false; \

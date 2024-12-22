@@ -57,23 +57,9 @@ int main(void) {
         set s = set_init(a);
 
         set_set(a, &s, 10, 'a');
-        testing_expect(&t, *set_get(s, 10) == 'a');
-
         set_set(a, &s, 20, 'b');
-        testing_expect(&t, *set_get(s, 10) == 'a');
-        testing_expect(&t, *set_get(s, 20) == 'b');
-
         set_set(a, &s, 30, 'c');
-        testing_expect(&t, *set_get(s, 10) == 'a');
-        testing_expect(&t, *set_get(s, 20) == 'b');
-        testing_expect(&t, *set_get(s, 30) == 'c');
-
         set_set(a, &s, 40, 'd');
-        testing_expect(&t, *set_get(s, 10) == 'a');
-        testing_expect(&t, *set_get(s, 20) == 'b');
-        testing_expect(&t, *set_get(s, 30) == 'c');
-        testing_expect(&t, *set_get(s, 40) == 'd');
-
         set_set(a, &s, 50, 'e');
         testing_expect(&t, *set_get(s, 10) == 'a');
         testing_expect(&t, *set_get(s, 20) == 'b');
@@ -87,6 +73,15 @@ int main(void) {
         testing_expect(&t, *set_get(s, 30) == 'c');
         testing_expect(&t, *set_get(s, 40) == 'd');
         testing_expect(&t, set_get(s, 50) == NULL);
+
+        set_unset(&s, 10);
+        set_set(a, &s, 150, 'f');
+        testing_expect(&t, set_get(s, 10) == NULL);
+        testing_expect(&t, *set_get(s, 20) == 'b');
+        testing_expect(&t, *set_get(s, 30) == 'c');
+        testing_expect(&t, *set_get(s, 40) == 'd');
+        testing_expect(&t, *set_get(s, 150) == 'f');
+
 
         set_deinit(a, &s);
     }

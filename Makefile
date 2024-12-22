@@ -18,7 +18,7 @@ ${BUILDDIR}/%.o: ${SRCDIR}/%.c
 	@mkdir -p ${BUILDDIR}
 	${CC} -c $< -o $@ ${CFLAGS} ${DEPENDENCIES}
 
-${TESTEXE}: all
+${TESTEXE}: all ${TESTFILE}
 	${CC} ${TESTFILE} ${OBJFILES} ${CFLAGS} ${DEPENDENCIES} -o ${TESTEXE}
 
 # Rule to build and run tests
