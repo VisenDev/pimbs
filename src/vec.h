@@ -113,6 +113,30 @@ int CONCAT(VEC_NAME, _append_n_times) (Allocator a, VEC_NAME * self, unsigned lo
 #else 
 ;
 #endif
+
+
+int CONCAT(VEC_NAME, _swap) (VEC_NAME * self, unsigned long lhs, unsigned long rhs) 
+#ifdef VEC_IMPLEMENTATION
+{
+    //Bounds check
+    if(lhs >= self->len || rhs >= self->len) {
+        return 1;
+    }
+
+    //Do nothing if lhs and rhs are the same index
+    if(lhs == rhs) {
+        return 0;
+    }
+
+    const VEC_TYPE tmp = self->items[lhs];
+    self->items[lhs] = self->items[rhs];
+    self->items[rhs] = tmp;
+
+    return 0;
+}
+#else 
+;
+#endif
     
 #undef VEC_NAME
 #undef VEC_TYPE

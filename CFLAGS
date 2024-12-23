@@ -30,3 +30,4 @@
 -fsanitize=undefined
 -Werror
 -O3
+-Wunused-result

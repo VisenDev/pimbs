@@ -5,6 +5,8 @@
 #define ARENA_IMPLEMENTATION
 #include "3rdparty/arena.h"
 
+//LIBC
+
 void* libc_alloc (struct Allocator self, unsigned long byte_count) {
     (void)self; //ignore ctx
     return malloc(byte_count); 
@@ -29,6 +31,8 @@ Allocator libc_allocator(void) {
     };
 }
 
+
+//LOGGING
 
 void* logging_alloc (struct Allocator self, unsigned long byte_count) {
     Allocator child = *(Allocator *)self.ctx;
@@ -136,3 +140,84 @@ void tsoding_arena_allocator_free(Allocator * a) {
     free(ctx);
 }
 
+
+//LEAKCHECK
+typedef struct {
+    Allocator child;
+    AllocRecords alloc_records;
+} LeakCheckCtx;
+
+
+void * leak_check_alloc(struct Allocator self, unsigned long byte_count) {
+    LeakCheckCtx * ctx = self.ctx;
+    void * mem = ctx->child.alloc(ctx->child, byte_count); 
+    const Allocation record = (Allocation){.ptr = mem, .byte_count = byte_count};
+    AllocRecords_append(ctx->child, &ctx->alloc_records, record);
+    return mem;
+}
+
+void * leak_check_realloc (struct Allocator self, void * old_mem, unsigned long new_byte_count) {
+    LeakCheckCtx * ctx = self.ctx;
+
+    Allocation * old = NULL;
+    for(unsigned long i = 0; i < ctx->alloc_records.len; ++i){
+        if(ctx->alloc_records.items[i].ptr == old_mem) {
+            old = &ctx->alloc_records.items[i];
+            break;    
+        }
+    }
+
+    assert(old != NULL && "old_mem pointer was not found");
+
+    void * new_mem = ctx->child.realloc(ctx->child, old_mem, new_byte_count);
+    if(new_mem == NULL) {
+        return NULL;
+    } else {
+        old->ptr = new_mem;
+        old->byte_count = new_byte_count;
+    }
+    return new_mem;
+}
+
+void leak_check_free (struct Allocator self, void * mem) {
+    LeakCheckCtx * ctx = self.ctx;
+    Allocation * old = NULL;
+    unsigned long index = 0;
+
+    for(unsigned long i = 0; i < ctx->alloc_records.len; ++i){
+        if(ctx->alloc_records.items[i].ptr == mem) {
+            old = &ctx->alloc_records.items[i];
+            index = i;
+            break;    
+        }
+    }
+    assert(old != NULL && "mem pointer was not found");
+    ctx->child.free(ctx->child, mem);
+
+    AllocRecords_swap(&ctx->alloc_records, index, ctx->alloc_records.len - 1);
+    ctx->alloc_records.len -= 1;
+}
+
+int leak_check_count_leaks(struct Allocator self) {
+    LeakCheckCtx * ctx = self.ctx;
+    return (int)ctx->alloc_records.len;
+}
+
+Allocator leak_check_allocator(struct Allocator child) {
+    LeakCheckCtx * ctx = child.alloc(child, sizeof(LeakCheckCtx));
+    ctx->alloc_records = AllocRecords_init();
+    ctx->child = child;
+
+    return (Allocator){
+        .ctx = ctx,
+        .alloc = &leak_check_alloc,
+        .realloc = &leak_check_realloc,
+        .free = &leak_check_free,
+    };
+}
+
+
+void leak_check_allocator_free(struct Allocator self) {
+    LeakCheckCtx * ctx = self.ctx;
+    ctx->child.free(ctx->child, ctx);
+}
