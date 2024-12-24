@@ -7,5 +7,6 @@ void tui_printf(const char * format, ...) {
     va_start(args, format);
     vprintf(format, args); 
     printf(TUI_RESET);
+    fflush(stdout);
     va_end(args);
 }

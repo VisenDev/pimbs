@@ -2,6 +2,7 @@
 #include <stddef.h>
 #include "testing.h"
 #include "allocator.h"
+#include "assert.h"
 //#include "vector.h"
 //#include "linked_list.h"
 //#include "sparse_set.h"
@@ -34,7 +35,7 @@ int main(void) {
     Allocator a = leak_check_allocator(libc);
     //Allocator a = logging_allocator(&child);
     //Allocator a = tsoding_arena_allocator();
-
+    
     if(false) {
         cleanup:
 

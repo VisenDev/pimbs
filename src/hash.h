@@ -1,7 +1,6 @@
 #include "allocator.h"
 #include "concat.h"
-#include <assert.h>
-#include <strings.h>
+#include "debug.h"
 
 #ifndef HASH_TYPE 
 #error "HASH_TYPE must be defined before including \"hash.h\""
@@ -103,6 +102,11 @@ unsigned long CONCAT(HASH_NAME, _hash)(HASH_NAME * const self, const char * key)
 int CONCAT(HASH_NAME, _put)(Allocator a, HASH_NAME * self, const char * key, const HASH_TYPE value)
 #ifdef SSET_IMPLEMENTATION
 {
+    const char * keycpy = string_copy(a, key, self->max_key_len);
+    if(keycpy == NULL) {
+        return 1;
+    }
+
     const unsigned long hash = CONCAT(HASH_NAME, _hash)(self, key);
     IndexRecord * node = CONCAT(Indexes, _get)(&self->indexes, hash);
     long values_array_index = -1;
@@ -117,7 +121,11 @@ int CONCAT(HASH_NAME, _put)(Allocator a, HASH_NAME * self, const char * key, con
     }
 
     //create new values array entry if none is found
-    if(values_array_index == -1)
+    if(values_array_index == -1) {
+        values_array_index = self->values.len - 1;
+        CONCAT(Values, _append)(a, &self->values, value);
+        CONCAT(Keys, _append)(a, &self->values, value);
+    }
      
 
 

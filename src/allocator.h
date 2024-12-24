@@ -25,4 +25,22 @@ void leak_check_allocator_free(struct Allocator self);
 Allocator leak_check_allocator(struct Allocator child);
 int leak_check_count_leaks(struct Allocator self);
 
+//UTILS
+#include <string.h>
+#include "debug.h"
+
+static inline char * string_copy(Allocator a, const char * const str, size_t maxlen) {
+    const size_t len = strnlen(str, maxlen);
+    char * buf = a.alloc(a, sizeof(char) * (len + 1));
+    memcpy(buf, str, len + 1);
+    if(buf == NULL) {
+        return NULL;
+    }
+
+    debug_assert(size_t, buf[len], ==, 0);
+    debug_assert(int, strncmp(buf, str, len), ==, 0);
+    return buf;
+}
+
+
 #endif //ALLOCATOR_H
