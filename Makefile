@@ -1,7 +1,7 @@
 CFLAGS=$(shell cat CFLAGS)
 DEPENDENCIES=
 SRCDIR=src
-CFILES=${SRCDIR}/allocator.c #${SRCDIR}/testing.c
+CFILES= #${SRCDIR}/allocator.c #${SRCDIR}/testing.c
 CC=clang
 BUILDDIR=build
 TESTFILE=${SRCDIR}/run_tests.c

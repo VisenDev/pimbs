@@ -9,13 +9,6 @@
 #error "VEC_NAME must be defined before including <vector.h>"
 #endif //VECTOR_TYPE
        
-
-// Correct INIT macro using forced expansion
-//#define INIT(Name) CONCAT(Name, _init)      
-//#define FREE(Name) CONCAT(Name, _free)      
-//#define APPEND(Name) CONCAT(Name, _append)      
-//#define GET(Name) CONCAT(Name, _get)      
-
 typedef struct VEC_NAME {
     VEC_TYPE * items;
     unsigned long len;
