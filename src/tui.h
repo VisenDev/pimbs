@@ -4,6 +4,8 @@
    #define TUI_IMPLEMENTED
 #endif
 
+#include "attributes.h"
+
 #define TUI_RED     "\x1b[31m"
 #define TUI_GREEN   "\x1b[32m"
 #define TUI_YELLOW  "\x1b[33m"
@@ -13,15 +15,13 @@
 #define TUI_RESET   "\x1b[0m"
 
 
+
 #ifndef LOG_FUNCTION
-    static void dummy_log_function(const char * format, ...)
-    #ifdef TUI_IMPLEMENTATION
-    {
+    PURE_FUNCTION
+    static inline int dummy_log_function(const char * format, ...) {
         (void)format;
+        return 0;
     }
-    #else
-    ;
-    #endif
     #define LOG_FUNCTION(...) dummy_log_function(__VA_ARGS__)
 #endif //LOG_FUNCTION
        

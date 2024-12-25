@@ -1,18 +1,10 @@
-/***************CHECK DEPENDENCIES*************/
-#ifndef CONCAT_H
-    #error "\"concat.h\" must be included before \"vec.h\""
-#endif //CONCAT_H
+#include "concat.h"
+#include "attributes.h"
 
-
-#ifndef ALLOCATOR_H
-    #error "\"allocator.h\" must be included before \"vec.h\""
-#endif //ALLOCATOR_H
-       
-       
-#ifndef ERRORS_H
-    #error "\"errors.h\" must be included before \"vec.h\""
-#endif //ALLOCATOR_H
-
+#ifdef VEC_IMPLEMENTATION
+    #include "allocator.h"
+    #include "errors.h"
+#endif //VEC_IMPLEMENTATION
 
 /**************CHECK TYPE AND NAME*************/
 #ifndef VEC_TYPE 
@@ -31,7 +23,7 @@ typedef struct VEC_NAME {
     unsigned long cap;
 } VEC_NAME;
 
-VEC_NAME CONCAT(VEC_NAME, _init) (void)
+NODISCARD PURE_FUNCTION VEC_NAME CONCAT(VEC_NAME, _init) (void)
 #ifdef VEC_IMPLEMENTATION
 {
     return (VEC_NAME) {
@@ -59,7 +51,7 @@ void CONCAT(VEC_NAME, _free) (Allocator a, VEC_NAME * self)
 ;
 #endif
 
-int CONCAT(VEC_NAME, _ensure_capacity) (Allocator a, VEC_NAME * self, unsigned long capacity)
+NODISCARD int CONCAT(VEC_NAME, _ensure_capacity) (Allocator a, VEC_NAME * self, unsigned long capacity)
 #ifdef VEC_IMPLEMENTATION
 {
     if(self->items == NULL) {
@@ -87,7 +79,7 @@ int CONCAT(VEC_NAME, _ensure_capacity) (Allocator a, VEC_NAME * self, unsigned l
 ;
 #endif
 
-int CONCAT(VEC_NAME, _append) (Allocator a, VEC_NAME * self, VEC_TYPE value)
+NODISCARD int CONCAT(VEC_NAME, _append) (Allocator a, VEC_NAME * self, VEC_TYPE value)
 #ifdef VEC_IMPLEMENTATION
 {
     if(self->len >= self->cap) {
@@ -108,7 +100,7 @@ int CONCAT(VEC_NAME, _append) (Allocator a, VEC_NAME * self, VEC_TYPE value)
 ;
 #endif
 
-int CONCAT(VEC_NAME, _append_n_times) (Allocator a, VEC_NAME * self, unsigned long times, VEC_TYPE value) 
+NODISCARD int CONCAT(VEC_NAME, _append_n_times) (Allocator a, VEC_NAME * self, unsigned long times, VEC_TYPE value) 
 #ifdef VEC_IMPLEMENTATION
 {
     for(unsigned long i = 0; i < times; ++i){
@@ -124,7 +116,7 @@ int CONCAT(VEC_NAME, _append_n_times) (Allocator a, VEC_NAME * self, unsigned lo
 #endif
 
 
-int CONCAT(VEC_NAME, _swap) (VEC_NAME * self, unsigned long lhs, unsigned long rhs) 
+NODISCARD int CONCAT(VEC_NAME, _swap) (VEC_NAME * self, unsigned long lhs, unsigned long rhs) 
 #ifdef VEC_IMPLEMENTATION
 {
     //Bounds check
@@ -149,3 +141,4 @@ int CONCAT(VEC_NAME, _swap) (VEC_NAME * self, unsigned long lhs, unsigned long r
     
 #undef VEC_NAME
 #undef VEC_TYPE
+#undef VEC_IMPLEMENTATION

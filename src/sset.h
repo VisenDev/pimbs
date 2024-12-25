@@ -1,20 +1,12 @@
-/***************CHECK DEPENDENCIES*************/
-#ifndef CONCAT_H
-    #error "\"concat.h\" must be included before \"sset.h\""
-#endif //CONCAT_H
 
-#ifndef ALLOCATOR_H
-    #error "\"allocator.h\" must be included before \"sset.h\""
-#endif //ALLOCATOR_H
+#include "attributes.h"
 
-#ifndef TUI_H
-    #error "\"tui.h\" must be included before \"sset.h\""
-#endif //TUI_H
-
-//#ifdef SSET_IMPLEMENTATION
-    //#define TUI_IMPLEMENTATION
-//#endif
-//#include "tui.h"
+#ifdef SSET_IMPLEMENTATION
+    #include "concat.h"
+    #include "allocator.h"
+    #include "tui.h"
+    #include "debug.h"
+#endif
 
 #define SSET_TYPE int
 #define SSET_NAME sset
@@ -29,19 +21,24 @@
        
 // Subtypes
 #ifdef SSET_IMPLEMENTATION
-#define VEC_IMPLEMENTATION
+   #define VEC_IMPLEMENTATION
 #endif //SSET_IMPLEMENTATION
-
 #define Dense CONCAT(SSET_NAME, _dense)
 #define VEC_NAME Dense
 #define VEC_TYPE SSET_TYPE
 #include "vec.h"
 
+#ifdef SSET_IMPLEMENTATION
+   #define VEC_IMPLEMENTATION
+#endif //SSET_IMPLEMENTATION
 #define Sparse CONCAT(SSET_NAME, _sparse)
 #define VEC_NAME Sparse 
 #define VEC_TYPE long
 #include "vec.h"
 
+#ifdef SSET_IMPLEMENTATION
+   #define VEC_IMPLEMENTATION
+#endif //SSET_IMPLEMENTATION
 #define DenseToSparse CONCAT(SSET_NAME, _dense_to_sparse)
 #define VEC_NAME DenseToSparse
 #define VEC_TYPE unsigned long
@@ -49,7 +46,7 @@
 
 #undef VEC_IMPLEMENTATION
 
-static const long NULL_INDEX = -1;
+#define NULL_INDEX -1
 
 typedef struct SSET_NAME {
     Dense dense;
@@ -57,6 +54,7 @@ typedef struct SSET_NAME {
     DenseToSparse dense_to_sparse;
 } SSET_NAME;
 
+NODISCARD
 SSET_NAME CONCAT(SSET_NAME, _init) (void) 
 #ifdef SSET_IMPLEMENTATION
 {
@@ -81,6 +79,7 @@ void CONCAT(SSET_NAME, _free) (Allocator a, SSET_NAME * self)
 ;
 #endif
 
+NODISCARD 
 int CONCAT(SSET_NAME, _expand_sparse) (Allocator a, SSET_NAME * self, unsigned long required_length)
 #ifdef SSET_IMPLEMENTATION
 {
@@ -94,7 +93,7 @@ int CONCAT(SSET_NAME, _expand_sparse) (Allocator a, SSET_NAME * self, unsigned l
 #endif
 
 
-
+NODISCARD 
 int CONCAT(SSET_NAME, _put)(Allocator a, SSET_NAME * self, unsigned long index, SSET_TYPE value) 
 #ifdef SSET_IMPLEMENTATION
 {
@@ -108,7 +107,7 @@ int CONCAT(SSET_NAME, _put)(Allocator a, SSET_NAME * self, unsigned long index, 
         }
     }
 
-    assert(index < self->sparse.len);
+    debug_assert(unsigned_long, index, <, self->sparse.len);
 
     const long dense_index = self->sparse.items[index];
 
@@ -134,6 +133,7 @@ int CONCAT(SSET_NAME, _put)(Allocator a, SSET_NAME * self, unsigned long index, 
 ;
 #endif
 
+NODISCARD
 int CONCAT(SSET_NAME, _delete)(SSET_NAME * self, const unsigned long index) 
 #ifdef SSET_IMPLEMENTATION
 {
@@ -184,6 +184,7 @@ int CONCAT(SSET_NAME, _delete)(SSET_NAME * self, const unsigned long index)
 ;
 #endif
 
+NODISCARD PURE_FUNCTION
 SSET_TYPE * CONCAT(SSET_NAME, _get)(SSET_NAME * self, const unsigned long index) 
 #ifdef SSET_IMPLEMENTATION
 {
@@ -211,3 +212,4 @@ SSET_TYPE * CONCAT(SSET_NAME, _get)(SSET_NAME * self, const unsigned long index)
 
 #undef SSET_NAME
 #undef SSET_TYPE
+#undef SSET_IMPLEMENTATION

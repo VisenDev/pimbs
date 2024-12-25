@@ -1,12 +1,6 @@
 #include <stdio.h>
-
 #define LOG_FUNCTION printf
-#include "src/tui.h"
 
-#include "src/debug.h"
-#include "src/errors.h"
-#include "src/concat.h" // IWYU pragma: keep
-                        
 #define ALLOCATOR_IMPLEMENTATION
 #include "src/allocator.h"
 

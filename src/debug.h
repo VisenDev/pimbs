@@ -1,9 +1,11 @@
 #ifndef DEBUG_H
 #define DEBUG_H
 
-#ifndef TUI_H
-#error "\"tui.h\" must be included before \"debug.h\""
-#endif //TUI_H
+//#ifndef TUI_H
+//#error "\"tui.h\" must be included before \"debug.h\""
+//#endif //TUI_H
+#include "tui.h"
+#include "attributes.h"
 
 
 #define int_specifier "%d"
@@ -37,33 +39,34 @@
 //#define debug_printf_warn(format, ...)
 //#define debug_printf_error(format, ...)
 
-#define trigger_segfault() \
-    do { \
-        tui_printf(TUI_RED   "   TRIGGERING SEGFAULT...\n\n"); \
-        *(volatile int*)0 = 0; \
-    } while (0) 
+//#define trigger_segfault() \
+//    do { \
+//        *(volatile int*)0 = 0; \
+//    } while (0) 
 
 #define log_location() tui_printf("   File: %s, Function: %s, Line: %d\n", __FILE__, __func__, __LINE__)
        
 #define debug_assert(type, lhs, operator, rhs) \
     do { \
-        if(!((lhs) operator (rhs))) { \
+        if(LIKELY_FALSE(!((lhs) operator (rhs)))) { \
             tui_printf(TUI_RED   "\nASSERTION FAILURE: %s %s %s\n", #lhs, #operator, #rhs); \
             tui_printf(TUI_YELLOW"   lhs expression %s expands to " type ## _specifier "\n", #lhs, lhs); \
             tui_printf(TUI_YELLOW"   rhs expression %s expands to " type ## _specifier "\n", #rhs, rhs); \
             log_location(); \
-            trigger_segfault(); \
+            tui_printf(TUI_RED   "   ABORTING...\n\n"); \
+            ABORT(); \
         } \
     } while (0)
 
 #define simple_assert(expression, message) \
     do { \
         const int condition = expression; \
-        if(!condition) { \
+        if(LIKELY_FALSE(!condition)) { \
             tui_printf(TUI_RED   "\nASSERTION FAILURE: %s\n", #expression); \
             tui_printf(TUI_YELLOW"   %s\n", message); \
             log_location(); \
-            trigger_segfault(); \
+            tui_printf(TUI_RED   "   ABORTING...\n\n"); \
+            ABORT(); \
         } \
     } while (0)
 

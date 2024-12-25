@@ -1,12 +1,18 @@
 /***************CHECK DEPENDENCIES*************/
-#ifndef CONCAT_H
-    #error "\"concat.h\" must be included before \"list.h\""
-#endif //CONCAT_H
+//#ifndef CONCAT_H
+//    #error "\"concat.h\" must be included before \"list.h\""
+//#endif //CONCAT_H
+//
+//
+//#ifndef ALLOCATOR_H
+//    #error "\"allocator.h\" must be included before \"list.h\""
+//#endif //ALLOCATOR_H
+#include "concat.h"
+#include "attributes.h"
 
-
-#ifndef ALLOCATOR_H
-    #error "\"allocator.h\" must be included before \"list.h\""
-#endif //ALLOCATOR_H
+#ifdef LIST_IMPLEMENTATION
+    #include "allocator.h"
+#endif
 
 /**************NAME AND TYPE*******************/
 #ifndef LIST_TYPE 
@@ -24,6 +30,7 @@ typedef struct LIST_NAME {
     struct LIST_NAME * next;
 } LIST_NAME;
 
+NODISCARD MAY_ALLOCATE
 LIST_NAME * CONCAT(LIST_NAME, _cons)(Allocator a, LIST_TYPE value, LIST_NAME * next)
 #ifdef LIST_IMPLEMENTATION
 {
@@ -55,3 +62,4 @@ void CONCAT(LIST_NAME, _free)(Allocator a, LIST_NAME * start)
 
 #undef LIST_TYPE
 #undef LIST_NAME
+#undef LIST_IMPLEMENTATION
