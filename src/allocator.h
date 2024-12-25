@@ -379,4 +379,55 @@ void leak_check_allocator_free(struct Allocator self)
 #endif
 
 
+
+
+//ALWAYSFAILING
+void* always_failing_alloc (struct Allocator self, unsigned long byte_count)
+#ifdef ALLOCATOR_IMPLEMENTATION
+{
+    (void)self;
+    (void)byte_count;
+    return NULL;
+}
+#else
+;
+#endif
+
+void* always_failing_realloc (struct Allocator self, void * old_mem, unsigned long new_byte_count)
+#ifdef ALLOCATOR_IMPLEMENTATION
+{
+    (void)self;
+    (void)new_byte_count;
+    (void)old_mem;
+    return NULL;
+}
+#else
+;
+#endif
+
+void always_failing_free(struct Allocator self, void * mem)
+#ifdef ALLOCATOR_IMPLEMENTATION
+{
+    (void)self; //ignore ctx
+    (void)mem;
+}
+#else
+;
+#endif
+
+Allocator always_failing_allocator(void)
+#ifdef ALLOCATOR_IMPLEMENTATION
+{
+    return (Allocator){
+        .ctx = NULL,
+        .alloc = &always_failing_alloc,
+        .realloc = &always_failing_realloc,
+        .free = &always_failing_free,
+    };
+}
+#else
+;
+#endif
+
+
 #endif //ALLOCATOR_H

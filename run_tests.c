@@ -1,11 +1,12 @@
-#include <stddef.h>
 #include <stdio.h>
 
 #define LOG_FUNCTION printf
 #include "src/tui.h"
 
 #include "src/debug.h"
-#include "src/concat.h"
+#include "src/errors.h"
+#include "src/concat.h" // IWYU pragma: keep
+                        
 #define ALLOCATOR_IMPLEMENTATION
 #include "src/allocator.h"
 
@@ -40,6 +41,7 @@ int main(void) {
     Allocator a = leak_check_allocator(libc);
     //Allocator a = logging_allocator(&child);
     //Allocator a = tsoding_arena_allocator();
+    //Allocator a = always_failing_allocator();
     
     if(0) {
         cleanup:
@@ -57,7 +59,8 @@ int main(void) {
         vec v = vec_init(); 
 
         for(int i = 0; i < 10000; ++i){
-            vec_append(a, &v, i);
+            const int err = vec_append(a, &v, i);
+            simple_assert(err == ERR_NONE, error_name(err));
         }
         for(int i = 0; i < 10000; ++i){
             if(i % 1000 == 0) {
@@ -79,6 +82,7 @@ int main(void) {
 
         for(int i = 0; i < 10000; ++i){
             node = list_cons(a, i, node);
+            simple_assert(node != NULL, "Node allocation failed");
         }
         list * start = node;
         for(int i = 9999; i >= 0; --i){
@@ -105,7 +109,7 @@ int main(void) {
         testing_start_test(&t, "sset.put");
         for(unsigned long i = 0; i < 10000; i += 1){
             const int err = sset_put(a, &s, i * 2, (int)(i / 10));
-            assert(!err);
+            simple_assert(err == ERR_NONE, error_name(err));
         }
 
         testing_start_test(&t, "sset.get");
@@ -120,7 +124,7 @@ int main(void) {
         for(unsigned long i = 0; i < 10000; i += 1){
             if(i % 333 == 0) {
                 const int err = sset_delete(&s, i * 2);
-                assert(!err);
+                simple_assert(err == ERR_NONE, error_name(err));
             }
         }
 

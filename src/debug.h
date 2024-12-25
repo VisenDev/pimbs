@@ -31,6 +31,19 @@
 #define uint64_t_specifier "%llu"
 #define size_t_specifier "%zu"
 #define ptrdiff_t_specifier "%td"
+
+
+//#define debug_printf_info(format, ...)
+//#define debug_printf_warn(format, ...)
+//#define debug_printf_error(format, ...)
+
+#define trigger_segfault() \
+    do { \
+        tui_printf(TUI_RED   "   TRIGGERING SEGFAULT...\n\n"); \
+        *(volatile int*)0 = 0; \
+    } while (0) 
+
+#define log_location() tui_printf("   File: %s, Function: %s, Line: %d\n", __FILE__, __func__, __LINE__)
        
 #define debug_assert(type, lhs, operator, rhs) \
     do { \
@@ -38,15 +51,22 @@
             tui_printf(TUI_RED   "\nASSERTION FAILURE: %s %s %s\n", #lhs, #operator, #rhs); \
             tui_printf(TUI_YELLOW"   lhs expression %s expands to " type ## _specifier "\n", #lhs, lhs); \
             tui_printf(TUI_YELLOW"   rhs expression %s expands to " type ## _specifier "\n", #rhs, rhs); \
-            tui_printf(TUI_RED   "   TRIGGERING SEGFAULT...\n\n"); \
-            *(volatile int*)0 = 0; \
+            log_location(); \
+            trigger_segfault(); \
         } \
     } while (0)
 
-#define debug_printf_info(format, ...)
-#define debug_printf_warn(format, ...)
-#define debug_printf_info(format, ...)
-#define debug_printf_info(format, ...)
+#define simple_assert(expression, message) \
+    do { \
+        const int condition = expression; \
+        if(!condition) { \
+            tui_printf(TUI_RED   "\nASSERTION FAILURE: %s\n", #expression); \
+            tui_printf(TUI_YELLOW"   %s\n", message); \
+            log_location(); \
+            trigger_segfault(); \
+        } \
+    } while (0)
+
 
 
 #endif //DEBUG_H

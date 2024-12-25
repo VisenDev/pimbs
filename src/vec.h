@@ -7,6 +7,11 @@
 #ifndef ALLOCATOR_H
     #error "\"allocator.h\" must be included before \"vec.h\""
 #endif //ALLOCATOR_H
+       
+       
+#ifndef ERRORS_H
+    #error "\"errors.h\" must be included before \"vec.h\""
+#endif //ALLOCATOR_H
 
 
 /**************CHECK TYPE AND NAME*************/
@@ -60,7 +65,7 @@ int CONCAT(VEC_NAME, _ensure_capacity) (Allocator a, VEC_NAME * self, unsigned l
     if(self->items == NULL) {
         VEC_TYPE * newmem = a.alloc(a, capacity * sizeof(VEC_TYPE));
         if(newmem == NULL) {
-            return 1;
+            return ERR_ALLOCATION_FAILURE;
         } else {
             self->items = newmem;
             self->cap = capacity;
@@ -69,14 +74,14 @@ int CONCAT(VEC_NAME, _ensure_capacity) (Allocator a, VEC_NAME * self, unsigned l
     } else if(self->cap < capacity) {
         VEC_TYPE * newmem = a.realloc(a, self->items, capacity * sizeof(VEC_TYPE));
         if(newmem == NULL) {
-            return 1;
+            return ERR_ALLOCATION_FAILURE;
         } else {
             self->items = newmem;
             self->cap = capacity;
         }
 
     }
-    return 0;
+    return ERR_NONE;
 }
 #else 
 ;
@@ -87,7 +92,7 @@ int CONCAT(VEC_NAME, _append) (Allocator a, VEC_NAME * self, VEC_TYPE value)
 {
     if(self->len >= self->cap) {
         const int err = CONCAT(VEC_NAME, _ensure_capacity)(a, self, (1 + self->cap) * 2);
-        if(err != 0) {
+        if(err != ERR_NONE) {
             return err;
         } else {
             return CONCAT(VEC_NAME, _append)(a, self, value);
@@ -96,7 +101,7 @@ int CONCAT(VEC_NAME, _append) (Allocator a, VEC_NAME * self, VEC_TYPE value)
         const unsigned long index = self->len;
         self->items[index] = value;
         self->len += 1;
-        return 0;
+        return ERR_NONE;
     }
 }
 #else 
@@ -108,11 +113,11 @@ int CONCAT(VEC_NAME, _append_n_times) (Allocator a, VEC_NAME * self, unsigned lo
 {
     for(unsigned long i = 0; i < times; ++i){
         const int err = CONCAT(VEC_NAME, _append)(a, self, value);
-        if(err != 0) {
+        if(err != ERR_NONE) {
             return err;
         }
     }
-    return 0;
+    return ERR_NONE;
 }
 #else 
 ;
@@ -124,19 +129,19 @@ int CONCAT(VEC_NAME, _swap) (VEC_NAME * self, unsigned long lhs, unsigned long r
 {
     //Bounds check
     if(lhs >= self->len || rhs >= self->len) {
-        return 1;
+        return ERR_INDEX_OUT_OF_BOUNDS;
     }
 
     //Do nothing if lhs and rhs are the same index
     if(lhs == rhs) {
-        return 0;
+        return ERR_NONE;
     }
 
     const VEC_TYPE tmp = self->items[lhs];
     self->items[lhs] = self->items[rhs];
     self->items[rhs] = tmp;
 
-    return 0;
+    return ERR_NONE;
 }
 #else 
 ;
