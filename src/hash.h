@@ -82,14 +82,15 @@ HASH_NAME CONCAT(HASH_NAME, _free)(Allocator a, HASH_NAME * self)
 ;
 #endif
 
-unsigned long CONCAT(HASH_NAME, _hash)(HASH_NAME * const self, const char * key) 
+unsigned long CONCAT(HASH_NAME, _hash)(HASH_NAME * const self, const char * key, unsigned long keylen) 
 #ifdef SSET_IMPLEMENTATION
 {
-    /*Inspired by djbt2 by Dan Bernstein - http://www.cse.yorku.ca/~oz/hash.html */
+    /* Inspired by djbt2 by Dan Bernstein - http://www.cse.yorku.ca/~oz/hash.html */
     unsigned long hash = 5381;
-    unsigned long c = 0;
 
-    for(unsigned long i = 0; (i < self->max_key_len) && (key[i] != 0); ++i) {
+    for(unsigned long i = 0; i < keylen; ++i) {
+        const unsigned char c = key[i];
+        simple_assert(c != 0, "provided keylen is incorrect");
         hash = ((hash << 5) + hash) + c; /* hash * 33 + c */
     }
 
@@ -99,15 +100,15 @@ unsigned long CONCAT(HASH_NAME, _hash)(HASH_NAME * const self, const char * key)
 ;
 #endif
 
-int CONCAT(HASH_NAME, _put)(Allocator a, HASH_NAME * self, const char * key, const HASH_TYPE value)
+int CONCAT(HASH_NAME, _put)(Allocator a, HASH_NAME * self, const char * key, unsigned long keylen, const HASH_TYPE value)
 #ifdef SSET_IMPLEMENTATION
 {
-    const char * keycpy = string_copy(a, key, self->max_key_len);
+    const char * keycpy = string_copy(a, key, keylen);
     if(keycpy == NULL) {
-        return 1;
+        return ERR_ALLOCATION_FAILURE;
     }
 
-    const unsigned long hash = CONCAT(HASH_NAME, _hash)(self, key);
+    const unsigned long hash = CONCAT(HASH_NAME, _hash)(self, key, keylen);
     IndexRecord * node = CONCAT(Indexes, _get)(&self->indexes, hash);
     long values_array_index = -1;
 
