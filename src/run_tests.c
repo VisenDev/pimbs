@@ -1,5 +1,12 @@
-#include <stdbool.h>
+//#include <stdbool.h>
+//#include <stddef.h>
+//#define TUI_IMPLEMENTATION
+//#include "tui.h"
 #include <stddef.h>
+#include <stdio.h>
+#define LOG_FUNCTION printf
+
+#define TESTING_IMPLEMENTATION
 #include "testing.h"
 #include "allocator.h"
 #include "assert.h"
@@ -36,7 +43,7 @@ int main(void) {
     //Allocator a = logging_allocator(&child);
     //Allocator a = tsoding_arena_allocator();
     
-    if(false) {
+    if(0) {
         cleanup:
 
         if(leak_check_count_leaks(a) != 0) {

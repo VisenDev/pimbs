@@ -37,7 +37,7 @@ static inline char * string_copy(Allocator a, const char * const str, size_t max
         return NULL;
     }
 
-    debug_assert(size_t, buf[len], ==, 0);
+    debug_assert(char, buf[len], ==, 0);
     debug_assert(int, strncmp(buf, str, len), ==, 0);
     return buf;
 }

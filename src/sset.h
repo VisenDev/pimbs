@@ -1,6 +1,11 @@
 #include "allocator.h"
 #include "concat.h"
+
+#ifdef SSET_IMPLEMENTATION
+    #define TUI_IMPLEMENTATION
+#endif
 #include "tui.h"
+
 #include <assert.h>
 #include <stdio.h>
 

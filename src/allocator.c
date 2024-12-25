@@ -1,4 +1,6 @@
 #include <stdlib.h>
+
+#define TUI_IMPLEMENTATION
 #include "tui.h"
 #include "allocator.h"
 
