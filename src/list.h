@@ -1,16 +1,24 @@
-#include "allocator.h"
-#include "concat.h"
+/***************CHECK DEPENDENCIES*************/
+#ifndef CONCAT_H
+    #error "\"concat.h\" must be included before \"list.h\""
+#endif //CONCAT_H
 
+
+#ifndef ALLOCATOR_H
+    #error "\"allocator.h\" must be included before \"list.h\""
+#endif //ALLOCATOR_H
+
+/**************NAME AND TYPE*******************/
 #ifndef LIST_TYPE 
-#error "LIST_TYPE must be defined before including \"list.h\""
+    #error "LIST_TYPE must be defined before including \"list.h\""
 #endif //LIST TYPE
        
 #ifndef LIST_NAME
-#error "LIST_NAME must be defined before including \"list.h\""
+    #error "LIST_NAME must be defined before including \"list.h\""
 #endif //LIST_NAME
        
 
-
+/*****************IMPLEMENTATION**************/
 typedef struct LIST_NAME {
     LIST_TYPE value;
     struct LIST_NAME * next;

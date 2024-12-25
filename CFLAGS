@@ -29,5 +29,5 @@
 -fsanitize=address
 -fsanitize=undefined
 -Werror
--O3
 -Wunused-result
+-O3

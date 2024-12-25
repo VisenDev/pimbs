@@ -1,16 +1,15 @@
-//#ifndef TESTING_H
-//#define TESTING_H
+#if !defined(TESTING_H) \
+    || (defined(TESTING_IMPLEMENTATION) && !defined(TESTING_IMPLEMENTED))
 
+#define TESTING_H
 #ifdef TESTING_IMPLEMENTATION
-    #ifdef TESTING_IMPLEMENTED
-        #undef TESTING_IMPLEMENTATION
+    #define TESTING_IMPLEMENTED
+
+    #ifndef TUI_H
+        #error "\"tui.h\" must be included before \"testing.h\" is implemented"
     #endif
 #endif
 
-
-#ifdef TESTING_IMPLEMENTATION
-    #define TESTING_IMPLEMENTED
-#endif
 
 typedef struct {
    const char* name;
@@ -23,15 +22,7 @@ typedef struct {
     TestingTracker active;
 } TestingState;
 
-//TestingState testing_init(void);
-//void testing_deinit(TestingState * state);
-//void testing_start_test(TestingState * state, const char* test_name);
-//void testing_expect_internal(TestingState*, const bool, const int, const char *);
-
-#ifdef TESTING_IMPLEMENTATION
-    #define TUI_IMPLEMENTATION
-#endif
-#include "tui.h"
+//TODO remove string.h dependency
 #include <string.h>
 
 static void testing_print_header(const char * str)
@@ -131,4 +122,4 @@ void testing_expect_internal(TestingState * state, const int condition, const in
 ;
 #endif
 
-//#endif //TESTING_H
+#endif //TESTING_H

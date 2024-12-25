@@ -3,9 +3,18 @@
 #define ALLOCATOR_H
 #ifdef ALLOCATOR_IMPLEMENTATION
     #define ALLOCATOR_IMPLEMENTED
-#endif //ALLOCATOR_IMPLEMENTATION
-    
 
+    #ifndef DEBUG_H
+       #error "\"debug.h\" must be included before \"allocator.h\" is implemented"
+    #endif //DEBUG_H
+    
+    
+    #ifndef TUI_H
+       #error "\"tui.h\" must be included before \"allocator.h\" is implemented"
+    #endif //TUI_H
+#endif //ALLOCATOR_IMPLEMENTATION
+       
+       
 struct Allocator;
 
 typedef void* (*AllocFn)(struct Allocator,unsigned long);
@@ -20,24 +29,9 @@ typedef struct Allocator {
 } Allocator;
 
 
-//Allocator libc_allocator(void);
-//Allocator logging_allocator(Allocator *child);
-//
-//Allocator tsoding_arena_allocator(void);
-//void tsoding_arena_allocator_free(Allocator *);
-//
-//void leak_check_allocator_free(struct Allocator self);
-//Allocator leak_check_allocator(struct Allocator child);
-//int leak_check_count_leaks(struct Allocator self);
-
+//TODO remove dependency on stdlib.h and string.h
 #include <stdlib.h>
 #include <string.h>
-#include "debug.h"
-
-#ifdef ALLOCATOR_IMPLEMENTATION
-   #define TUI_IMPLEMENTATION
-#endif
-#include "tui.h"
 
 #ifdef ALLOCATOR_IMPLEMENTATION
    #define ARENA_IMPLEMENTATION

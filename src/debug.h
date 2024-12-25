@@ -1,8 +1,10 @@
 #ifndef DEBUG_H
 #define DEBUG_H
 
-#include "tui.h"
-#include "concat.h"
+#ifndef TUI_H
+#error "\"tui.h\" must be included before \"debug.h\""
+#endif //TUI_H
+
 
 #define int_specifier "%d"
 #define unsigned_int_specifier "%u"

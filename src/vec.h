@@ -1,14 +1,25 @@
-#include "allocator.h"
-#include "concat.h"
+/***************CHECK DEPENDENCIES*************/
+#ifndef CONCAT_H
+    #error "\"concat.h\" must be included before \"vec.h\""
+#endif //CONCAT_H
 
+
+#ifndef ALLOCATOR_H
+    #error "\"allocator.h\" must be included before \"vec.h\""
+#endif //ALLOCATOR_H
+
+
+/**************CHECK TYPE AND NAME*************/
 #ifndef VEC_TYPE 
-#error "VEC_TYPE must be defined before including <vector.h>"
+    #error "VEC_TYPE must be defined before including <vector.h>"
 #endif //VECTOR_TYPE
        
 #ifndef VEC_NAME
-#error "VEC_NAME must be defined before including <vector.h>"
+    #error "VEC_NAME must be defined before including <vector.h>"
 #endif //VECTOR_TYPE
        
+
+/**************IMPLEMENTATION*****************/
 typedef struct VEC_NAME {
     VEC_TYPE * items;
     unsigned long len;

@@ -1,32 +1,36 @@
 #include <stddef.h>
 #include <stdio.h>
+
 #define LOG_FUNCTION printf
+#include "src/tui.h"
+
+#include "src/debug.h"
+#include "src/concat.h"
+#define ALLOCATOR_IMPLEMENTATION
+#include "src/allocator.h"
 
 #define TESTING_IMPLEMENTATION
-#include "testing.h"
-#define ALLOCATOR_IMPLEMENTATION
-#include "allocator.h"
-#include "assert.h"
+#include "src/testing.h"
 
 #define VEC_IMPLEMENTATION
 #define VEC_NAME vec
 #define VEC_TYPE int
-#include "vec.h"
+#include "src/vec.h"
 
 #define VEC_IMPLEMENTATION
 #define VEC_NAME str 
 #define VEC_TYPE char
-#include "vec.h"
+#include "src/vec.h"
 
 #define LIST_IMPLEMENTATION
 #define LIST_NAME list
 #define LIST_TYPE int 
-#include "list.h"
+#include "src/list.h"
 
 #define SSET_IMPLEMENTATION
 #define SSET_NAME sset
 #define SSET_TYPE int
-#include "sset.h"
+#include "src/sset.h"
 
 
 int main(void) {

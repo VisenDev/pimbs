@@ -1,13 +1,20 @@
-#include "allocator.h"
-#include "concat.h"
+/***************CHECK DEPENDENCIES*************/
+#ifndef CONCAT_H
+    #error "\"concat.h\" must be included before \"sset.h\""
+#endif //CONCAT_H
 
-#ifdef SSET_IMPLEMENTATION
-    #define TUI_IMPLEMENTATION
-#endif
-#include "tui.h"
+#ifndef ALLOCATOR_H
+    #error "\"allocator.h\" must be included before \"sset.h\""
+#endif //ALLOCATOR_H
 
-#include <assert.h>
-#include <stdio.h>
+#ifndef TUI_H
+    #error "\"tui.h\" must be included before \"sset.h\""
+#endif //TUI_H
+
+//#ifdef SSET_IMPLEMENTATION
+    //#define TUI_IMPLEMENTATION
+//#endif
+//#include "tui.h"
 
 #define SSET_TYPE int
 #define SSET_NAME sset
