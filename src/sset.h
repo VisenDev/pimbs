@@ -1,15 +1,12 @@
 
 #include "attributes.h"
+#include "concat.h"
 
 #ifdef SSET_IMPLEMENTATION
-    #include "concat.h"
     #include "allocator.h"
     #include "tui.h"
     #include "debug.h"
 #endif
-
-#define SSET_TYPE int
-#define SSET_NAME sset
 
 #ifndef SSET_TYPE 
 #error "SSET_TYPE must be defined before including \"sset.h\""

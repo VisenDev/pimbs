@@ -129,7 +129,7 @@ NODISCARD int CONCAT(VEC_NAME, _swap) (VEC_NAME * self, unsigned long lhs, unsig
         return ERR_NONE;
     }
 
-    const VEC_TYPE tmp = self->items[lhs];
+    VEC_TYPE tmp = self->items[lhs];
     self->items[lhs] = self->items[rhs];
     self->items[rhs] = tmp;
 

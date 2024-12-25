@@ -30,8 +30,8 @@ typedef struct LIST_NAME {
     struct LIST_NAME * next;
 } LIST_NAME;
 
-NODISCARD MAY_ALLOCATE
-LIST_NAME * CONCAT(LIST_NAME, _cons)(Allocator a, LIST_TYPE value, LIST_NAME * next)
+NODISCARD 
+LIST_NAME * CONCAT(LIST_NAME, _cons)(Allocator a, LIST_TYPE value, struct LIST_NAME * next)
 #ifdef LIST_IMPLEMENTATION
 {
     LIST_NAME * node = a.alloc(a, sizeof(LIST_NAME)); 

@@ -27,6 +27,11 @@
 #define SSET_TYPE int
 #include "src/sset.h"
 
+#define HASH_IMPLEMENTATION
+#define HASH_NAME hashmap
+#define HASH_TYPE long
+#include "src/hash.h"
+
 
 int main(void) {
     TestingState t = testing_init();
@@ -138,6 +143,28 @@ int main(void) {
     if(leak_check_count_leaks(a) != 0) {
         debug_printf("sset tests leak count: %d\n", leak_check_count_leaks(a));
     }
+
+
+    testing_start_test(&t, "hashmap");
+    {
+        int err = 0;
+        hashmap h = hashmap_init();
+
+        err = hashmap_put(a, &h, "asdf", 4, 1);
+        simple_assert(err == ERR_NONE, error_name(err));
+
+        err = hashmap_put(a, &h, "ASDF", 4, 2);
+        simple_assert(err == ERR_NONE, error_name(err));
+
+        err = hashmap_put(a, &h, "IDGAF", 5, 3);
+        simple_assert(err == ERR_NONE, error_name(err));
+
+        testing_expect(&t, *hashmap_get(&h, "asdf", 4) == 1);
+        testing_expect(&t, *hashmap_get(&h, "ASDF", 4) == 2);
+        testing_expect(&t, *hashmap_get(&h, "IDGAF", 5) == 3);
+        hashmap_free(a, &h);
+    }
+
 
     goto cleanup;
 }
