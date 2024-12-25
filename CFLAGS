@@ -25,9 +25,9 @@
 -Wimplicit-fallthrough
 -Wunused
 -Wstrict-overflow=5
--ferror-limit=1
 -fsanitize=address
 -fsanitize=undefined
 -Werror
 -Wunused-result
 -O3
+-ferror-limit=1

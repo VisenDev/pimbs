@@ -39,11 +39,6 @@
 //#define debug_printf_warn(format, ...)
 //#define debug_printf_error(format, ...)
 
-//#define trigger_segfault() \
-//    do { \
-//        *(volatile int*)0 = 0; \
-//    } while (0) 
-
 #define log_location() tui_printf("   File: %s, Function: %s, Line: %d\n", __FILE__, __func__, __LINE__)
        
 #define debug_assert(type, lhs, operator, rhs) \
