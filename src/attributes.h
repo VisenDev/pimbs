@@ -12,7 +12,7 @@
   //  #define PURE_FUNCTION
 #endif //C23
 
-#if defined(__GNUC__) || defined(__clang__)
+#if defined(__gcc__) || defined(__clang__)
     #define LIKELY_TRUE(expr)  __builtin_expect(expr, 1)
     #define LIKELY_FALSE(expr) __builtin_expect(expr, 0)
     #define MAY_ALLOCATE __attribute__((malloc))

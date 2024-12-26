@@ -3,6 +3,11 @@
 
 #include "attributes.h"
 
+typedef struct {
+    char * str;
+    unsigned long len;
+} String;
+
 NODISCARD PURE_FUNCTION
 static inline int string_equal( const char * lhs, const char * rhs, unsigned long maxlen )
 {

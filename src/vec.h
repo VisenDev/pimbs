@@ -1,8 +1,8 @@
 #include "concat.h"
 #include "attributes.h"
+#include "allocator.h"
 
 #ifdef VEC_IMPLEMENTATION
-    #include "allocator.h"
     #include "errors.h"
 #endif //VEC_IMPLEMENTATION
 

@@ -41,6 +41,8 @@ int main(void) {
     //Allocator a = logging_allocator(&child);
     //Allocator a = tsoding_arena_allocator();
     //Allocator a = always_failing_allocator();
+    //
+    int test = (inline_assert(1), 1);
     
     if(0) {
         cleanup:
