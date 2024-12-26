@@ -32,6 +32,8 @@
 #define HASH_TYPE long
 #include "src/hash.h"
 
+#define REFLECT_IMPLEMENTATION
+#include "src/reflect.h"
 
 int main(void) {
     TestingState t = testing_init();
@@ -41,8 +43,11 @@ int main(void) {
     //Allocator a = logging_allocator(&child);
     //Allocator a = tsoding_arena_allocator();
     //Allocator a = always_failing_allocator();
-    //
-    int test = (inline_assert(1), 1);
+
+    TypeRegistry registry = TypeRegistry_init();
+
+    TypeRegistry_free(a, &registry);
+    
     
     if(0) {
         cleanup:

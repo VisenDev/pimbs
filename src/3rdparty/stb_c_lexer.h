@@ -141,7 +141,7 @@ typedef struct
 extern "C" {
 #endif
 
-extern void stb_c_lexer_init(stb_lexer *lexer, const char *input_stream, const char *input_stream_end, char *string_store, int store_length);
+extern void stb_c_lexer_init(stb_lexer *lexer, char *input_stream, char *input_stream_end, char *string_store, int store_length);
 // this function initialize the 'lexer' structure
 //   Input:
 //   - input_stream points to the file to parse, loaded into memory
@@ -270,7 +270,7 @@ typedef long       stb__clex_int;
 #define N(a)
 
 // API function
-void stb_c_lexer_init(stb_lexer *lexer, const char *input_stream, const char *input_stream_end, char *string_store, int store_length)
+void stb_c_lexer_init(stb_lexer *lexer, char *input_stream, char *input_stream_end, char *string_store, int store_length)
 {
    lexer->input_stream = (char *) input_stream;
    lexer->eof = (char *) input_stream_end;
@@ -321,7 +321,7 @@ static int stb__clex_iswhite(int x)
    return x == ' ' || x == '\t' || x == '\r' || x == '\n' || x == '\f';
 }
 
-static const char *stb__strchr(const char *str, int ch)
+static inline const char *stb__strchr(const char *str, int ch)
 {
    for (; *str; ++str)
       if (*str == ch)
@@ -344,9 +344,9 @@ static int stb__clex_parse_suffixes(stb_lexer *lexer, long tokenid, char *start,
       lexer->string[lexer->string_len++] = *cur++;
    }
    #else
-   suffixes = suffixes; // attempt to suppress warnings
+   (void)suffixes; // attempt to suppress warnings
    #endif
-   return stb__clex_token(lexer, tokenid, start, cur-1);
+   return stb__clex_token(lexer, (int)tokenid, start, cur-1);
 }
 
 #ifndef STB__CLEX_use_stdlib
@@ -732,6 +732,10 @@ int stb_c_lexer_get_token(stb_lexer *lexer)
          // so have to do float first
 
          /* FALL THROUGH */
+
+#if defined(__clang__) || defined(__gcc__)
+   __attribute__((fallthrough));
+#endif
       case '1': case '2': case '3': case '4': case '5': case '6': case '7': case '8': case '9':
 
          #ifdef STB__clex_decimal_floats

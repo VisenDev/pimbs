@@ -21,6 +21,7 @@ REFLECTIVE_TYPEDEF( Foo,
 
 
 //IMPLEMENTATION
+#include "attributes.h"
 #include "strutils.h"
 #include "allocator.h"
 
@@ -31,7 +32,13 @@ REFLECTIVE_TYPEDEF( Foo,
 
 struct TypeMetadata;
 
-#define VEC_TYPE struct TypeMetadata
+typedef enum {
+    TYPE_PRIMITIVE,
+    TYPE_STRUCT,
+    TYPE_UNION,
+} TypeTag;
+
+#define VEC_TYPE struct TypeMetadata *
 #define VEC_NAME TypeMetadataVec
 #ifdef REFLECT_IMPLEMENTATION
     #define VEC_IMPLEMENTATION
@@ -50,17 +57,12 @@ typedef struct {
     String format_specifier;
 } PrimitiveMetadata;
 
-typedef union {
+typedef union TypeValue {
     StructMetadata struct_;  //underscore used because "struct" as a field name won't compile
     UnionMetadata union_; 
     PrimitiveMetadata primitive_; 
 } TypeValue;
 
-typedef enum {
-    TYPE_PRIMITIVE,
-    TYPE_STRUCT,
-    TYPE_UNION,
-} TypeTag;
 
 typedef struct TypeMetadata {
     String name;
@@ -69,18 +71,47 @@ typedef struct TypeMetadata {
 } TypeMetadata;
 
 
-TypeMetadata * parse_type_metadata(Allocator a, const char * const type_def, const unsigned long type_def_len) 
+#define HASH_TYPE struct TypeMetadata
+#define HASH_NAME TypeMetadataTable
+#ifdef REFLECT_IMPLEMENTATION
+    #define HASH_IMPLEMENTATION
+#endif
+#include "hash.h"
+
+typedef struct {
+    TypeMetadataTable types;
+} TypeRegistry;
+
+NODISCARD PURE_FUNCTION
+TypeRegistry TypeRegistry_init(void) 
 #ifdef REFLECT_IMPLEMENTATION
 {
-    TypeMetadata * result = a.alloc(sizeof(TypeMetadata));
-    if(result == NULL) {
-        return NULL;
-    }
+    return (TypeRegistry){.types = TypeMetadataTable_init(),};
+}
+#else
+;
+#endif
 
+void TypeRegistry_free(Allocator a, TypeRegistry * self)
+#ifdef REFLECT_IMPLEMENTATION
+{
+    TypeMetadataTable_free(a, &self->types);
+}
+#else
+;
+#endif
+
+
+NODISCARD
+int record_type_metadata(Allocator a, TypeRegistry * registry, char * type_def, const unsigned long type_def_len) 
+#ifdef REFLECT_IMPLEMENTATION
+{
+
+    (void) registry;
     const unsigned int buflen = 10000;
-    char * buf = a.alloc(buflen);
+    char * buf = a.alloc(a, buflen);
     if(buf == NULL) {
-        return NULL;
+        return ERR_ALLOCATION_FAILURE;
     }
 
     stb_lexer lex;
@@ -90,9 +121,11 @@ TypeMetadata * parse_type_metadata(Allocator a, const char * const type_def, con
           printf("\n<<<PARSE ERROR>>>\n");
           break;
        }
-       print_token(&lex);
+    //   print_token(&lex);
        printf("  ");
     }
+
+    return ERR_NONE;
 }
 #else
 ;
