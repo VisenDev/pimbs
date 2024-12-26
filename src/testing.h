@@ -60,7 +60,7 @@ static void testing_print_summary(const TestingTracker tracker)
 #endif
 
 
-TestingState testing_init(void)
+static TestingState testing_init(void)
 #ifdef TESTING_IMPLEMENTATION
 {
     return (TestingState) {
@@ -73,7 +73,7 @@ TestingState testing_init(void)
 #endif
 
 
-void testing_deinit(TestingState * state)
+static void testing_deinit(TestingState * state)
 #ifdef TESTING_IMPLEMENTATION
 {
     if(state->active.name != NULL) {
@@ -87,7 +87,7 @@ void testing_deinit(TestingState * state)
 #endif
 
 
-void testing_start_test(TestingState * state, const char* test_name)
+static void testing_start_test(TestingState * state, const char* test_name)
 #ifdef TESTING_IMPLEMENTATION
 {
     if(state->active.name != NULL) {
@@ -104,7 +104,7 @@ void testing_start_test(TestingState * state, const char* test_name)
 #endif
 
 #define testing_expect(state, condition) testing_expect_internal(state, condition, __LINE__, __FILE__)
-void testing_expect_internal(TestingState * state, const int condition, const int line, const char * file)
+static void testing_expect_internal(TestingState * state, const int condition, const int line, const char * file)
 #ifdef TESTING_IMPLEMENTATION
 {
     if(condition) {

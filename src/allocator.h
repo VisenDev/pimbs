@@ -3,7 +3,7 @@
 
 #ifdef ALLOCATOR_IMPLEMENTATION
     #define ALLOCATOR_IMPLEMENTED
-#endif //ALLOCATOR_IMPLEMENTATION
+#endif /*ALLOCATOR_IMPLEMENTATION*/
 
 #include "attributes.h"
 #include "debug.h"
@@ -24,17 +24,12 @@ typedef struct Allocator {
 } Allocator;
 
 
-//TODO remove dependency on stdlib.h and string.h
+/*TODO remove dependency on stdlib.h and string.h*/
 #include <stdlib.h>
 #include <string.h>
 
-#ifdef ALLOCATOR_IMPLEMENTATION
-   #define ARENA_IMPLEMENTATION
-#endif
-#include "3rdparty/arena.h"
 
-
-//UTILS
+/*UTILS*/
 NODISCARD MAY_ALLOCATE
 static inline char * string_copy(Allocator a, const char * const str, size_t maxlen)
 #ifdef ALLOCATOR_IMPLEMENTATION
@@ -55,13 +50,13 @@ static inline char * string_copy(Allocator a, const char * const str, size_t max
 #endif
 
 
-//LIBC
+/*LIBC*/
 
 NODISCARD MAY_ALLOCATE
-void* libc_alloc (struct Allocator self, unsigned long byte_count)
+static void* libc_alloc (struct Allocator self, unsigned long byte_count)
 #ifdef ALLOCATOR_IMPLEMENTATION
 {
-    (void)self; //ignore ctx
+    (void)self; /*ignore ctx*/
     return malloc(byte_count); 
 }
 #else
@@ -69,20 +64,20 @@ void* libc_alloc (struct Allocator self, unsigned long byte_count)
 #endif
 
 NODISCARD MAY_ALLOCATE
-void* libc_realloc (struct Allocator self, void * old_mem, unsigned long new_byte_count)
+static void* libc_realloc (struct Allocator self, void * old_mem, unsigned long new_byte_count)
 #ifdef ALLOCATOR_IMPLEMENTATION
 {
-    (void)self; //ignore ctx
+    (void)self; /*ignore ctx*/
     return realloc(old_mem, new_byte_count); 
 }
 #else
 ;
 #endif
 
-void libc_free(struct Allocator self, void * mem)
+static void libc_free(struct Allocator self, void * mem)
 #ifdef ALLOCATOR_IMPLEMENTATION
 {
-    (void)self; //ignore ctx
+    (void)self; /*ignore ctx*/
     free(mem); 
 }
 #else
@@ -90,7 +85,7 @@ void libc_free(struct Allocator self, void * mem)
 #endif
 
 NODISCARD PURE_FUNCTION
-Allocator libc_allocator(void)
+static Allocator libc_allocator(void)
 #ifdef ALLOCATOR_IMPLEMENTATION
 {
     return (Allocator){
@@ -105,10 +100,10 @@ Allocator libc_allocator(void)
 #endif
 
 
-//LOGGING
+/*LOGGING*/
 
 NODISCARD MAY_ALLOCATE
-void* logging_alloc (struct Allocator self, unsigned long byte_count)
+static void* logging_alloc (struct Allocator self, unsigned long byte_count)
 #ifdef ALLOCATOR_IMPLEMENTATION
 {
     Allocator child = *(Allocator *)self.ctx;
@@ -121,7 +116,7 @@ void* logging_alloc (struct Allocator self, unsigned long byte_count)
 #endif
 
 NODISCARD MAY_ALLOCATE
-void* logging_realloc (struct Allocator self, void * old_mem, unsigned long new_byte_count)
+static void* logging_realloc (struct Allocator self, void * old_mem, unsigned long new_byte_count)
 #ifdef ALLOCATOR_IMPLEMENTATION
 {
     Allocator child = *(Allocator *) self.ctx;
@@ -133,7 +128,7 @@ void* logging_realloc (struct Allocator self, void * old_mem, unsigned long new_
 ;
 #endif
 
-void logging_free(struct Allocator self, void * mem)
+static void logging_free(struct Allocator self, void * mem)
 #ifdef ALLOCATOR_IMPLEMENTATION
 {
     Allocator child = *(Allocator *) self.ctx;
@@ -145,7 +140,7 @@ void logging_free(struct Allocator self, void * mem)
 #endif
 
 NODISCARD PURE_FUNCTION
-Allocator logging_allocator(Allocator *child)
+static inline Allocator logging_allocator(Allocator *child)
 #ifdef ALLOCATOR_IMPLEMENTATION
 {
     return (Allocator){
@@ -160,7 +155,7 @@ Allocator logging_allocator(Allocator *child)
 #endif
 
 
-//ARENA
+/*ARENA*/
 
 typedef struct {
     void * ptr;
@@ -178,6 +173,7 @@ typedef struct {
 #endif
 
 
+/*
 typedef struct {
     Arena arena;
     Allocator libc;
@@ -272,9 +268,10 @@ void tsoding_arena_allocator_free(Allocator * a)
 #else
 ;
 #endif
+*/
 
 
-//LEAKCHECK
+/*LEAKCHECK*/
 typedef struct {
     Allocator child;
     AllocRecords alloc_records;
@@ -282,7 +279,7 @@ typedef struct {
 
 
 NODISCARD MAY_ALLOCATE
-void * leak_check_alloc(struct Allocator self, unsigned long byte_count)
+static void * leak_check_alloc(struct Allocator self, unsigned long byte_count)
 #ifdef ALLOCATOR_IMPLEMENTATION
 {
     LeakCheckCtx * ctx = self.ctx;
@@ -299,9 +296,10 @@ void * leak_check_alloc(struct Allocator self, unsigned long byte_count)
 #endif
 
 NODISCARD MAY_ALLOCATE
-void * leak_check_realloc (struct Allocator self, void * old_mem, unsigned long new_byte_count)
+static void * leak_check_realloc (struct Allocator self, void * old_mem, unsigned long new_byte_count)
 #ifdef ALLOCATOR_IMPLEMENTATION
 {
+    void * new_mem = NULL;
     LeakCheckCtx * ctx = self.ctx;
 
     Allocation * old = NULL;
@@ -312,9 +310,9 @@ void * leak_check_realloc (struct Allocator self, void * old_mem, unsigned long 
         }
     }
 
-    assert(old != NULL && "old_mem pointer was not found");
+    simple_assert(old != NULL, "old_mem pointer was not found");
 
-    void * new_mem = ctx->child.realloc(ctx->child, old_mem, new_byte_count);
+    new_mem = ctx->child.realloc(ctx->child, old_mem, new_byte_count);
     if(new_mem == NULL) {
         return NULL;
     } else {
@@ -327,11 +325,12 @@ void * leak_check_realloc (struct Allocator self, void * old_mem, unsigned long 
 ;
 #endif
 
-void leak_check_free (struct Allocator self, void * mem)
+static void leak_check_free (struct Allocator self, void * mem)
 #ifdef ALLOCATOR_IMPLEMENTATION
 {
     LeakCheckCtx * ctx = self.ctx;
     Allocation * old = NULL;
+    int err;
     unsigned long index = 0;
 
     for(unsigned long i = 0; i < ctx->alloc_records.len; ++i){
@@ -341,10 +340,10 @@ void leak_check_free (struct Allocator self, void * mem)
             break;    
         }
     }
-    assert(old != NULL && "mem pointer was not found");
+    simple_assert(old != NULL, "mem pointer was not found");
     ctx->child.free(ctx->child, mem);
 
-    const int err = AllocRecords_swap(&ctx->alloc_records, index, ctx->alloc_records.len - 1);
+    err = AllocRecords_swap(&ctx->alloc_records, index, ctx->alloc_records.len - 1);
     simple_assert(err == ERR_NONE, "Indexes for swap are incorrect");
     ctx->alloc_records.len -= 1;
 }
@@ -353,7 +352,7 @@ void leak_check_free (struct Allocator self, void * mem)
 #endif
 
 NODISCARD PURE_FUNCTION
-int leak_check_count_leaks(struct Allocator self)
+static int leak_check_count_leaks(struct Allocator self)
 #ifdef ALLOCATOR_IMPLEMENTATION
 {
     LeakCheckCtx * ctx = self.ctx;
@@ -364,7 +363,7 @@ int leak_check_count_leaks(struct Allocator self)
 #endif
 
 NODISCARD PURE_FUNCTION
-Allocator leak_check_allocator(struct Allocator child)
+static Allocator leak_check_allocator(struct Allocator child)
 #ifdef ALLOCATOR_IMPLEMENTATION
 {
     LeakCheckCtx * ctx = child.alloc(child, sizeof(LeakCheckCtx));
@@ -383,10 +382,11 @@ Allocator leak_check_allocator(struct Allocator child)
 #endif
 
 
-void leak_check_allocator_free(struct Allocator self)
+static void leak_check_allocator_free(struct Allocator self)
 #ifdef ALLOCATOR_IMPLEMENTATION
 {
     LeakCheckCtx * ctx = self.ctx;
+    AllocRecords_free(ctx->child, &ctx->alloc_records);
     ctx->child.free(ctx->child, ctx);
 }
 #else
@@ -396,10 +396,10 @@ void leak_check_allocator_free(struct Allocator self)
 
 
 
-//ALWAYSFAILING
+/*ALWAYSFAILING*/
 
 NODISCARD MAY_ALLOCATE
-void* always_failing_alloc (struct Allocator self, unsigned long byte_count)
+static void* always_failing_alloc (struct Allocator self, unsigned long byte_count)
 #ifdef ALLOCATOR_IMPLEMENTATION
 {
     (void)self;
@@ -411,7 +411,7 @@ void* always_failing_alloc (struct Allocator self, unsigned long byte_count)
 #endif
 
 NODISCARD MAY_ALLOCATE
-void* always_failing_realloc (struct Allocator self, void * old_mem, unsigned long new_byte_count)
+static void* always_failing_realloc (struct Allocator self, void * old_mem, unsigned long new_byte_count)
 #ifdef ALLOCATOR_IMPLEMENTATION
 {
     (void)self;
@@ -423,10 +423,10 @@ void* always_failing_realloc (struct Allocator self, void * old_mem, unsigned lo
 ;
 #endif
 
-void always_failing_free(struct Allocator self, void * mem)
+static void always_failing_free(struct Allocator self, void * mem)
 #ifdef ALLOCATOR_IMPLEMENTATION
 {
-    (void)self; //ignore ctx
+    (void)self; /*ignore ctx*/
     (void)mem;
 }
 #else
@@ -434,7 +434,7 @@ void always_failing_free(struct Allocator self, void * mem)
 #endif
 
 NODISCARD PURE_FUNCTION
-Allocator always_failing_allocator(void)
+static Allocator always_failing_allocator(void)
 #ifdef ALLOCATOR_IMPLEMENTATION
 {
     return (Allocator){
@@ -449,4 +449,4 @@ Allocator always_failing_allocator(void)
 #endif
 
 
-#endif //ALLOCATOR_H
+#endif /*ALLOCATOR_H*/

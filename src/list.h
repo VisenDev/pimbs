@@ -25,13 +25,20 @@
        
 
 /*****************IMPLEMENTATION**************/
+struct LIST_NAME;
+
+#ifdef __clang__
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wpadded"
+#endif //__clang__
 typedef struct LIST_NAME {
-    LIST_TYPE value;
     struct LIST_NAME * next;
+    LIST_TYPE value;
 } LIST_NAME;
+#pragma clang diagnostic pop
 
 NODISCARD 
-LIST_NAME * CONCAT(LIST_NAME, _cons)(Allocator a, LIST_TYPE value, struct LIST_NAME * next)
+static LIST_NAME * CONCAT(LIST_NAME, _cons)(Allocator a, LIST_TYPE value, struct LIST_NAME * next)
 #ifdef LIST_IMPLEMENTATION
 {
     LIST_NAME * node = a.alloc(a, sizeof(LIST_NAME)); 
@@ -46,7 +53,7 @@ LIST_NAME * CONCAT(LIST_NAME, _cons)(Allocator a, LIST_TYPE value, struct LIST_N
 ;
 #endif
 
-void CONCAT(LIST_NAME, _free)(Allocator a, LIST_NAME * start)
+static void CONCAT(LIST_NAME, _free)(Allocator a, LIST_NAME * start)
 #ifdef LIST_IMPLEMENTATION
 {
     if(start != NULL) {

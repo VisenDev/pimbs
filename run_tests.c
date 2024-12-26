@@ -85,12 +85,12 @@ int main(void) {
     testing_start_test(&t, "list");
     {
         list * node = NULL;
+        list * start = node;
 
         for(int i = 0; i < 10000; ++i){
             node = list_cons(a, i, node);
             simple_assert(node != NULL, "Node allocation failed");
         }
-        list * start = node;
         for(int i = 9999; i >= 0; --i){
             if(i % 1000 == 0) {
                 testing_expect(&t, node->value == i);

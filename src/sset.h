@@ -52,7 +52,7 @@ typedef struct SSET_NAME {
 } SSET_NAME;
 
 NODISCARD
-SSET_NAME CONCAT(SSET_NAME, _init) (void) 
+static SSET_NAME CONCAT(SSET_NAME, _init) (void) 
 #ifdef SSET_IMPLEMENTATION
 {
     return (SSET_NAME) {
@@ -65,7 +65,7 @@ SSET_NAME CONCAT(SSET_NAME, _init) (void)
 ;
 #endif
 
-void CONCAT(SSET_NAME, _free) (Allocator a, SSET_NAME * self)
+static void CONCAT(SSET_NAME, _free) (Allocator a, SSET_NAME * self)
 #ifdef SSET_IMPLEMENTATION
 {
     CONCAT(Dense, _free)(a, &self->dense);
@@ -77,7 +77,7 @@ void CONCAT(SSET_NAME, _free) (Allocator a, SSET_NAME * self)
 #endif
 
 NODISCARD 
-int CONCAT(SSET_NAME, _expand_sparse) (Allocator a, SSET_NAME * self, unsigned long required_length)
+static int CONCAT(SSET_NAME, _expand_sparse) (Allocator a, SSET_NAME * self, unsigned long required_length)
 #ifdef SSET_IMPLEMENTATION
 {
     if(self->sparse.len < required_length) {
@@ -91,11 +91,12 @@ int CONCAT(SSET_NAME, _expand_sparse) (Allocator a, SSET_NAME * self, unsigned l
 
 
 NODISCARD 
-int CONCAT(SSET_NAME, _put)(Allocator a, SSET_NAME * self, unsigned long index, SSET_TYPE value) 
+static int CONCAT(SSET_NAME, _put)(Allocator a, SSET_NAME * self, unsigned long index, SSET_TYPE value) 
 #ifdef SSET_IMPLEMENTATION
 {
 
     int err = 0;
+    long dense_index = NULL_INDEX;
 
     if(index >= self->sparse.len) {
         err = CONCAT(SSET_NAME, _expand_sparse)(a, self, index + 1);
@@ -106,7 +107,7 @@ int CONCAT(SSET_NAME, _put)(Allocator a, SSET_NAME * self, unsigned long index, 
 
     debug_assert(unsigned_long, index, <, self->sparse.len);
 
-    const long dense_index = self->sparse.items[index];
+    dense_index = self->sparse.items[index];
 
     if(dense_index == NULL_INDEX) {
         //append new
@@ -131,10 +132,11 @@ int CONCAT(SSET_NAME, _put)(Allocator a, SSET_NAME * self, unsigned long index, 
 #endif
 
 NODISCARD
-int CONCAT(SSET_NAME, _delete)(SSET_NAME * self, const unsigned long index) 
+static int CONCAT(SSET_NAME, _delete)(SSET_NAME * self, const unsigned long index) 
 #ifdef SSET_IMPLEMENTATION
 {
     int err = 0;
+    long dense_index = NULL_INDEX;
 
 
     //bounds checks
@@ -143,7 +145,7 @@ int CONCAT(SSET_NAME, _delete)(SSET_NAME * self, const unsigned long index)
         return 1;
     }
 
-    const long dense_index = self->sparse.items[index];
+    dense_index = self->sparse.items[index];
     if(dense_index == NULL_INDEX) {
         debug_printf("attempting delete NULL_INDEX index %lu\n", index);
         return 1;
@@ -182,15 +184,18 @@ int CONCAT(SSET_NAME, _delete)(SSET_NAME * self, const unsigned long index)
 #endif
 
 NODISCARD PURE_FUNCTION
-SSET_TYPE * CONCAT(SSET_NAME, _get)(SSET_NAME * self, const unsigned long index) 
+static SSET_TYPE * CONCAT(SSET_NAME, _get)(SSET_NAME * self, const unsigned long index) 
 #ifdef SSET_IMPLEMENTATION
 {
+
+    long dense_index = NULL_INDEX;
+
     //bounds checks
     if(index >= self->sparse.len) {
         return NULL;
     }
 
-    const long dense_index = self->sparse.items[index];
+    dense_index = self->sparse.items[index];
     if(dense_index == NULL_INDEX) {
         return NULL;
     }

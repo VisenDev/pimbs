@@ -1,9 +1,6 @@
 #ifndef DEBUG_H
 #define DEBUG_H
 
-//#ifndef TUI_H
-//#error "\"tui.h\" must be included before \"debug.h\""
-//#endif //TUI_H
 #include "tui.h"
 #include "attributes.h"
 
@@ -34,10 +31,6 @@
 #define size_t_specifier "%zu"
 #define ptrdiff_t_specifier "%td"
 
-
-//#define debug_printf_info(format, ...)
-//#define debug_printf_warn(format, ...)
-//#define debug_printf_error(format, ...)
 
 #define log_location() LOG_FUNCTION("   File: %s, Function: %s, Line: %d\n", __FILE__, __func__, __LINE__)
        
@@ -70,4 +63,4 @@
 
 
 
-#endif //DEBUG_H
+#endif /*DEBUG_H*/

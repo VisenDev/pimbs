@@ -23,7 +23,8 @@ typedef struct VEC_NAME {
     unsigned long cap;
 } VEC_NAME;
 
-NODISCARD PURE_FUNCTION VEC_NAME CONCAT(VEC_NAME, _init) (void)
+NODISCARD PURE_FUNCTION
+static VEC_NAME CONCAT(VEC_NAME, _init) (void)
 #ifdef VEC_IMPLEMENTATION
 {
     return (VEC_NAME) {
@@ -37,7 +38,7 @@ NODISCARD PURE_FUNCTION VEC_NAME CONCAT(VEC_NAME, _init) (void)
 #endif
 
 
-void CONCAT(VEC_NAME, _free) (Allocator a, VEC_NAME * self) 
+static void CONCAT(VEC_NAME, _free) (Allocator a, VEC_NAME * self) 
 #ifdef VEC_IMPLEMENTATION
 {
     if(self->items != NULL) {
@@ -51,7 +52,8 @@ void CONCAT(VEC_NAME, _free) (Allocator a, VEC_NAME * self)
 ;
 #endif
 
-NODISCARD int CONCAT(VEC_NAME, _ensure_capacity) (Allocator a, VEC_NAME * self, unsigned long capacity)
+NODISCARD
+static int CONCAT(VEC_NAME, _ensure_capacity) (Allocator a, VEC_NAME * self, unsigned long capacity)
 #ifdef VEC_IMPLEMENTATION
 {
     if(self->items == NULL) {
@@ -79,7 +81,8 @@ NODISCARD int CONCAT(VEC_NAME, _ensure_capacity) (Allocator a, VEC_NAME * self, 
 ;
 #endif
 
-NODISCARD int CONCAT(VEC_NAME, _append) (Allocator a, VEC_NAME * self, VEC_TYPE value)
+NODISCARD
+static int CONCAT(VEC_NAME, _append) (Allocator a, VEC_NAME * self, VEC_TYPE value)
 #ifdef VEC_IMPLEMENTATION
 {
     if(self->len >= self->cap) {
@@ -100,7 +103,8 @@ NODISCARD int CONCAT(VEC_NAME, _append) (Allocator a, VEC_NAME * self, VEC_TYPE 
 ;
 #endif
 
-NODISCARD int CONCAT(VEC_NAME, _append_n_times) (Allocator a, VEC_NAME * self, unsigned long times, VEC_TYPE value) 
+NODISCARD
+static int CONCAT(VEC_NAME, _append_n_times) (Allocator a, VEC_NAME * self, unsigned long times, VEC_TYPE value) 
 #ifdef VEC_IMPLEMENTATION
 {
     for(unsigned long i = 0; i < times; ++i){
@@ -116,9 +120,12 @@ NODISCARD int CONCAT(VEC_NAME, _append_n_times) (Allocator a, VEC_NAME * self, u
 #endif
 
 
-NODISCARD int CONCAT(VEC_NAME, _swap) (VEC_NAME * self, unsigned long lhs, unsigned long rhs) 
+NODISCARD
+static int CONCAT(VEC_NAME, _swap) (VEC_NAME * self, unsigned long lhs, unsigned long rhs) 
 #ifdef VEC_IMPLEMENTATION
 {
+    VEC_TYPE tmp;
+
     //Bounds check
     if(lhs >= self->len || rhs >= self->len) {
         return ERR_INDEX_OUT_OF_BOUNDS;
@@ -129,7 +136,7 @@ NODISCARD int CONCAT(VEC_NAME, _swap) (VEC_NAME * self, unsigned long lhs, unsig
         return ERR_NONE;
     }
 
-    VEC_TYPE tmp = self->items[lhs];
+    tmp = self->items[lhs];
     self->items[lhs] = self->items[rhs];
     self->items[rhs] = tmp;
 

@@ -110,6 +110,10 @@
 #ifndef INCLUDE_STB_C_LEXER_H
 #define INCLUDE_STB_C_LEXER_H
 
+
+
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wpadded"
 typedef struct
 {
    // lexer variables
@@ -130,6 +134,7 @@ typedef struct
    char *string;
    int string_len;
 } stb_lexer;
+#pragma clang diagnostic pop
 
 typedef struct
 {
@@ -460,6 +465,7 @@ static int stb__clex_parse_char(char *p, char **q)
          case '0': return '\0'; // @TODO ocatal constants
          case 'x': case 'X': return -1; // @TODO hex constants
          case 'u': return -1; // @TODO unicode constants
+         default: return -1;
       }
    }
    *q = p+1;

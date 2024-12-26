@@ -17,9 +17,10 @@ static inline char const * error_name(const int error_code) {
             return "ERR_ALLOCATION_FAILURE";
         case ERR_INDEX_OUT_OF_BOUNDS:
             return "ERR_INDEX_OUT_OF_BOUNDS";
+        default:
+            simple_assert(0, "Invalid error code");
     }
 
-    simple_assert(0, "Invalid error code");
     return NULL;
 }
 

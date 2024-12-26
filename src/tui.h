@@ -23,11 +23,9 @@
         return 0;
     }
     #define LOG_FUNCTION(...) dummy_log_function(__VA_ARGS__)
-#endif //LOG_FUNCTION
+#endif /*LOG_FUNCTION*/
        
-//static inline int tui_printf(
-
 #define tui_printf(...) do {LOG_FUNCTION(__VA_ARGS__); LOG_FUNCTION(TUI_RESET); } while (0)
 #define debug_printf tui_printf
 
-#endif //TUI_H
+#endif /*TUI_H*/

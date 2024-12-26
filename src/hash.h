@@ -61,7 +61,7 @@ typedef struct {
 } HASH_NAME;
 
 NODISCARD PURE_FUNCTION
-HASH_NAME CONCAT(HASH_NAME, _init)(void) 
+static HASH_NAME CONCAT(HASH_NAME, _init)(void) 
 #ifdef HASH_IMPLEMENTATION
 {
     return (HASH_NAME){
@@ -77,7 +77,7 @@ HASH_NAME CONCAT(HASH_NAME, _init)(void)
 #endif
 
 
-void CONCAT(HASH_NAME, _free)(Allocator a, HASH_NAME * self) 
+static void CONCAT(HASH_NAME, _free)(Allocator a, HASH_NAME * self) 
 #ifdef HASH_IMPLEMENTATION
 {
     for(unsigned long i = 0; i < self->keys.len; ++i) {
@@ -97,7 +97,7 @@ void CONCAT(HASH_NAME, _free)(Allocator a, HASH_NAME * self)
 #endif
 
 NODISCARD PURE_FUNCTION
-unsigned long CONCAT(HASH_NAME, _hash)(HASH_NAME * const self, const char * key, unsigned long keylen) 
+static unsigned long CONCAT(HASH_NAME, _hash)(HASH_NAME * const self, const char * key, unsigned long keylen) 
 #ifdef HASH_IMPLEMENTATION
 {
     /* Inspired by djbt2 by Dan Bernstein - http://www.cse.yorku.ca/~oz/hash.html */
@@ -117,20 +117,20 @@ unsigned long CONCAT(HASH_NAME, _hash)(HASH_NAME * const self, const char * key,
 
 
 NODISCARD PURE_FUNCTION
-HASH_TYPE * CONCAT(HASH_NAME, _get)(HASH_NAME * self, const char * key, unsigned long keylen) 
+static HASH_TYPE * CONCAT(HASH_NAME, _get)(HASH_NAME * self, const char * key, unsigned long keylen) 
 #ifdef HASH_IMPLEMENTATION
 {
     const unsigned long hash = CONCAT(HASH_NAME, _hash)(self, key, keylen);
     IndexRecord ** maybe_starting_node = CONCAT(Indexes, _get)(&self->indexes, hash);
     IndexRecord * starting_node = maybe_starting_node == NULL ? NULL : *maybe_starting_node; 
-
+    char * possible_matching_key = NULL;
     long values_array_index = -1;
 
     for(IndexRecord * node = starting_node; node != NULL; node = node->next) {
         debug_assert(unsigned_long, node->value, <, self->keys.len);
 
         //extract the key associated with the node
-        const char * possible_matching_key = self->keys.items[node->value];
+        possible_matching_key = self->keys.items[node->value];
         if(string_equal(key, possible_matching_key, self->max_key_len)) {
             values_array_index = (long)node->value;
             break;
@@ -150,7 +150,7 @@ HASH_TYPE * CONCAT(HASH_NAME, _get)(HASH_NAME * self, const char * key, unsigned
 #endif
 
 NODISCARD
-int CONCAT(HASH_NAME, _put)(Allocator a, HASH_NAME * self, const char * key, unsigned long keylen, const HASH_TYPE value)
+static int CONCAT(HASH_NAME, _put)(Allocator a, HASH_NAME * self, const char * key, unsigned long keylen, const HASH_TYPE value)
 #ifdef HASH_IMPLEMENTATION
 {
     //create internal copy of key
@@ -178,6 +178,7 @@ int CONCAT(HASH_NAME, _put)(Allocator a, HASH_NAME * self, const char * key, uns
     //create new values array entry if none is found
     if(found == NULL) {
         int err = 0;
+        char * keycpy = NULL;
 
         //append new entry
         err = CONCAT(Values, _append)(a, &self->values, value);
@@ -185,7 +186,7 @@ int CONCAT(HASH_NAME, _put)(Allocator a, HASH_NAME * self, const char * key, uns
             return ERR_ALLOCATION_FAILURE;
         }
 
-        char * keycpy = string_copy(a, key, keylen);
+        keycpy = string_copy(a, key, keylen);
         if(keycpy == NULL) {
             return ERR_ALLOCATION_FAILURE;
         }
@@ -195,16 +196,18 @@ int CONCAT(HASH_NAME, _put)(Allocator a, HASH_NAME * self, const char * key, uns
         }
 
         //create new node
-        const unsigned long hash = CONCAT(HASH_NAME, _hash)(self, keycpy, keylen);
-        IndexRecord ** old_node_location = CONCAT(Indexes, _get)(&self->indexes, hash);
-        IndexRecord * old_node = old_node_location == NULL ? NULL : *old_node_location;
-        IndexRecord* new_node = CONCAT(IndexRecord, _cons)(a, self->values.len - 1, old_node);
-        if(new_node == NULL) {
-            return ERR_ALLOCATION_FAILURE;
-        }
-        err = CONCAT(Indexes, _put)(a, &self->indexes, hash, new_node);
-        if(err != ERR_NONE) {
-            return ERR_ALLOCATION_FAILURE;
+        {
+            const unsigned long hash = CONCAT(HASH_NAME, _hash)(self, keycpy, keylen);
+            IndexRecord ** old_node_location = CONCAT(Indexes, _get)(&self->indexes, hash);
+            IndexRecord * old_node = old_node_location == NULL ? NULL : *old_node_location;
+            IndexRecord* new_node = CONCAT(IndexRecord, _cons)(a, self->values.len - 1, old_node);
+            if(new_node == NULL) {
+                return ERR_ALLOCATION_FAILURE;
+            }
+            err = CONCAT(Indexes, _put)(a, &self->indexes, hash, new_node);
+            if(err != ERR_NONE) {
+                return ERR_ALLOCATION_FAILURE;
+            }
         }
 
     //a corresponding key has been found, so update its associated value

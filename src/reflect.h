@@ -5,19 +5,19 @@
     typedef __VA_ARGS__ name; \
     const char * name ## _metadata = #__VA_ARGS__
 
-REFLECTIVE_TYPEDEF(Bazz,
-    struct {
-        int i;
-        char foo;
-        float biff;
-    });
-
-REFLECTIVE_TYPEDEF( Foo,
-    enum {
-        FOO_ONE,
-        FOO_TWO,
-        FOO_THREE,
-    });
+//REFLECTIVE_TYPEDEF(Bazz,
+//    struct {
+//        int i;
+//        char foo;
+//        float biff;
+//    });
+//
+//REFLECTIVE_TYPEDEF( Foo,
+//    enum {
+//        FOO_ONE,
+//        FOO_TWO,
+//        FOO_THREE,
+//    });
 
 
 //IMPLEMENTATION
@@ -64,12 +64,18 @@ typedef union TypeValue {
 } TypeValue;
 
 
+#ifdef __clang__
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wpadded"
+#endif /*__clang__*/
 typedef struct TypeMetadata {
-    String name;
     TypeTag tag;
+    String name;
     TypeValue value;
 } TypeMetadata;
-
+#ifdef __clang__
+#pragma clang diagnostic pop
+#endif /*__clang__*/
 
 #define HASH_TYPE struct TypeMetadata
 #define HASH_NAME TypeMetadataTable
@@ -83,7 +89,7 @@ typedef struct {
 } TypeRegistry;
 
 NODISCARD PURE_FUNCTION
-TypeRegistry TypeRegistry_init(void) 
+static TypeRegistry TypeRegistry_init(void) 
 #ifdef REFLECT_IMPLEMENTATION
 {
     return (TypeRegistry){.types = TypeMetadataTable_init(),};
@@ -92,7 +98,7 @@ TypeRegistry TypeRegistry_init(void)
 ;
 #endif
 
-void TypeRegistry_free(Allocator a, TypeRegistry * self)
+static void TypeRegistry_free(Allocator a, TypeRegistry * self)
 #ifdef REFLECT_IMPLEMENTATION
 {
     TypeMetadataTable_free(a, &self->types);
@@ -103,18 +109,18 @@ void TypeRegistry_free(Allocator a, TypeRegistry * self)
 
 
 NODISCARD
-int record_type_metadata(Allocator a, TypeRegistry * registry, char * type_def, const unsigned long type_def_len) 
+static int record_type_metadata(Allocator a, TypeRegistry * registry, char * type_def, const unsigned long type_def_len) 
 #ifdef REFLECT_IMPLEMENTATION
 {
 
-    (void) registry;
     const unsigned int buflen = 10000;
     char * buf = a.alloc(a, buflen);
+    stb_lexer lex;
+    (void) registry;
     if(buf == NULL) {
         return ERR_ALLOCATION_FAILURE;
     }
 
-    stb_lexer lex;
     stb_c_lexer_init(&lex, type_def, type_def + type_def_len, buf, buflen);
     while (stb_c_lexer_get_token(&lex)) {
        if (lex.token == CLEX_parse_error) {

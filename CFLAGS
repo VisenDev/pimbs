@@ -1,4 +1,4 @@
--std=c99
+-std=c89
 -Wall
 -Wextra
 -pedantic
@@ -27,7 +27,13 @@
 -Wstrict-overflow=5
 -fsanitize=address
 -fsanitize=undefined
--Werror
 -Wunused-result
 -O3
+-Wno-unused-parameter
+-Wold-style-definition
+-Wredundant-decls
+-Wnested-externs
+-Wmissing-include-dirs
 -ferror-limit=1
+-Weverything
+-Werror

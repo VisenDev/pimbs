@@ -1,16 +1,13 @@
 #ifndef ATTRIBUTES_H
 #define ATTRIBUTES_H
 
-#if defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 202311L) //check for C23
+#if defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 202311L) /*check for C23*/
     #define NODISCARD [[nodiscard]]
-//    #define PURE_FUNCTION [[reproducable]]
 #elif defined(__GNUC__) || defined(__clang__)
     #define NODISCARD __attribute__((warn_unused_result))
- //   #define PURE_FUNCTION __attribute__((const))
 #else
     #define NODISCARD
-  //  #define PURE_FUNCTION
-#endif //C23
+#endif /*C23*/
 
 #if defined(__gcc__) || defined(__clang__)
     #define LIKELY_TRUE(expr)  __builtin_expect(expr, 1)
@@ -27,7 +24,7 @@
         #define ABORT() (*(volatile int *)0) = 0
     #else 
         #define ABORT() abort()
-    #endif //NO_CSTDLIB
-#endif //GCC or Clang
+    #endif /*NO_CSTDLIB*/
+#endif /*GCC or Clang*/
 
-#endif //ATTRIBUTES_H
+#endif /*ATTRIBUTES_H*/
