@@ -1,12 +1,12 @@
 #include <stdio.h>
 #define LOG_FUNCTION printf
 
+#define TESTING_IMPLEMENTATION
+#include "src/testing.h"
+
 #define USE_CSTDLIB
 #define ALLOCATOR_IMPLEMENTATION
 #include "src/allocator.h"
-
-#define TESTING_IMPLEMENTATION
-#include "src/testing.h"
 
 #define VEC_IMPLEMENTATION
 #define VEC_NAME vec
@@ -37,12 +37,14 @@
 int main(void) {
     TestingState t = testing_init();
 
-    #define buflen 0xFFFFFFFF
-    static char buf[buflen];
-    Allocator fixed = fixed_buffer_allocator(buf, buflen);
-    /*Allocator libc = libc_allocator();*/
-    Allocator logging = logging_allocator(&fixed);
-    Allocator a = leak_check_allocator(&logging);
+    /*#define buflen 0xFFFFFFFF*/
+    /*static char buf[buflen];*/
+    /*Allocator fixed = fixed_buffer_allocator(buf, buflen);*/
+    Allocator libc = libc_allocator();
+    /*Allocator logging = logging_allocator(&libc);*/
+    Allocator a = leak_check_allocator(&libc);
+
+    test_memory_copy(&t);
 
     if(0) {
         cleanup:

@@ -1,4 +1,6 @@
-#if !defined(ALLOCATOR_H) || (defined(ALLOCATOR_IMPLEMENTATION) && !defined(ALLOCATOR_IMPLEMENTED))
+#if !defined(ALLOCATOR_H) /* || (defined(ALLOCATOR_IMPLEMENTATION) && !defined(ALLOCATOR_IMPLEMENTED))*/
+
+
 #define ALLOCATOR_H
 
 #ifdef ALLOCATOR_IMPLEMENTATION
@@ -8,7 +10,8 @@
 #include "attributes.h"
 #include "debug.h"
 #include "tui.h"
-       
+#include "strutils.h"       
+#include "testing.h"
        
 struct Allocator;
 
@@ -22,6 +25,9 @@ typedef struct Allocator {
     ReallocFn realloc;
     FreeFn free;
 } Allocator;
+
+
+
 
 
 #ifdef USE_CSTDLIB
@@ -339,13 +345,8 @@ Allocator always_failing_allocator(void)
 #endif
 
 
-/* Fixed Buffer */
-typedef struct {
-    char * buf;
-    char * end;
-    unsigned long i;
-} FixedBufferCtx;
 
+/* memcpy */
 static void memory_copy(void * dest, const void * const src, const unsigned long byte_count)
 #ifdef ALLOCATOR_IMPLEMENTATION
 {
@@ -359,6 +360,41 @@ static void memory_copy(void * dest, const void * const src, const unsigned long
 #else
 ;
 #endif
+
+static void test_memory_copy(TestingState * t)
+#ifdef ALLOCATOR_IMPLEMENTATION
+{
+    unsigned int i = 0;
+    unsigned int errors = 0;
+    char dest[10000];
+    char src[10000];
+
+    testing_start_test(t, "memory_copy");
+
+    for(i = 0; i < 10000; ++i) {
+        char ch = (char)(i%255);
+        src[i] = ch;
+    }
+    memory_copy(&dest, &src, 10000);
+    for(i = 0; i < 10000; ++i) {
+        if(dest[i] != src[i]) {
+            errors += 1;
+        }
+    }
+
+    testing_expect(t, errors == 0);
+}
+#else
+;
+#endif
+
+
+/* Fixed Buffer */
+typedef struct {
+    char * buf;
+    char * end;
+    unsigned long i;
+} FixedBufferCtx;
 
 
 /* fixed buffer allocation memory layout
@@ -378,12 +414,14 @@ typedef struct {
 
 #define MAGIC {0xDE, 0xAD, 0xBE, 0xEF}
 
-static void verify_magic(char magic[4]) 
+static void verify_magic(const char magic[4]) 
 #ifdef ALLOCATOR_IMPLEMENTATION
 {
     const char valid[4] = MAGIC;
     unsigned int i = 0;
+    tui_printf("verifying magic\n");
     for(i = 0; i < 4; ++i) {
+        debug_assert(char, valid[i], ==, valid[i]);
         debug_assert(char, magic[i], ==, valid[i]);
     }
 
@@ -392,20 +430,68 @@ static void verify_magic(char magic[4])
 ;
 #endif
 
+
+static void verify_metadata(const FixedBufferAllocationMetadata metadata)
+#ifdef ALLOCATOR_IMPLEMENTATION
+{
+    tui_printf("verifying metadata\n");
+    verify_magic(metadata.premagic);
+    verify_magic(metadata.postmagic);
+}
+#else
+;
+#endif
+
+static FixedBufferAllocationMetadata get_metadata(void * metadata_location_ptr) 
+#ifdef ALLOCATOR_IMPLEMENTATION
+{
+    FixedBufferAllocationMetadata result = {0}; 
+    tui_printf("getting metadata\n");
+    memory_copy(metadata_location_ptr, &result, sizeof(FixedBufferAllocationMetadata));
+    /*verify_metadata(result);*/
+    return result;
+}
+#else
+;
+#endif
+
+
+static void set_metadata(void * metadata_location_ptr, const unsigned long byte_count) 
+#ifdef ALLOCATOR_IMPLEMENTATION
+{
+    FixedBufferAllocationMetadata metadata = {0}; 
+    char magic[4] = MAGIC;
+    verify_magic(magic);
+    tui_printf1("setting metadata: %lu\n", byte_count);
+    memory_copy(&metadata.premagic, &magic, 4);
+    memory_copy(&metadata.postmagic, &magic, 4);
+    metadata.byte_count = byte_count;
+    verify_metadata(metadata);
+    memory_copy(metadata_location_ptr, &metadata, sizeof(FixedBufferAllocationMetadata));
+    tui_printf("verifying metadata was set correctly\n");
+    verify_metadata(get_metadata(metadata_location_ptr));
+}
+#else
+;
+#endif
+
+
+
+
+
+
 static void verify_fixed_buffer_allocation(void * mem)
 #ifdef ALLOCATOR_IMPLEMENTATION
 {
     char * buf = mem;
-    FixedBufferAllocationMetadata * start;
-    FixedBufferAllocationMetadata * end;
-    memory_copy(start, mem - sizeof(FixedBufferAllocationMetadata));
-    verify_magic(start->premagic);
-    verify_magic(start->postmagic);
+    const FixedBufferAllocationMetadata start = get_metadata(buf - sizeof(FixedBufferAllocationMetadata));
+    tui_printf("verifing fixed buffer allocation\n");
+    verify_metadata(start);
+    {
+        const FixedBufferAllocationMetadata end = get_metadata(buf + start.byte_count);
+        verify_metadata(end);
+    }
 
-    memory_copy(end, mem + start->byte_count);  
-    verify_magic(start->premagic);
-    verify_magic(start->postmagic);
-    debug_assert(unsigned_long, start->byte_count, ==, end->byte_count);
 }
 #else
 ;
@@ -416,23 +502,21 @@ static void* fixed_buffer_alloc (struct Allocator self, unsigned long byte_count
 #ifdef ALLOCATOR_IMPLEMENTATION
 {
     FixedBufferCtx * ctx = self.ctx;
-    const unsigned long needed_bytes = byte_count + (4 * sizeof(unsigned long));
+    const unsigned long needed_bytes = byte_count + (2 * sizeof(FixedBufferAllocationMetadata));
+    char * top = ctx->buf + ctx->i;
 
-    if((ctx->buf + ctx->i + needed_bytes) < ctx->end) {
+    tui_printf1("Allocating %lu bytes\n", byte_count);
 
-        char * start_byte_count = (ctx->buf + ctx->i);
-        char * start_magic = start_byte_count + sizeof(unsigned long);
-        char * end_magic = start_magic + byte_count;
-        char * end_byte_count = end_magic + sizeof(unsigned long);
-        const unsigned long magic_number = MAGIC;
+    if((top + needed_bytes) < ctx->end) {
+        char * result = top + sizeof(FixedBufferAllocationMetadata);
+        set_metadata(top, byte_count);
+        tui_printf("checking metadata was set correctly\n");
+        verify_metadata(get_metadata(top));
 
-        memory_copy(start_byte_count, &byte_count, sizeof(unsigned long));
-        memory_copy(end_byte_count, &byte_count, sizeof(unsigned long));
-        memory_copy(start_magic, &magic_number, sizeof(unsigned long));
-        memory_copy(end_magic, &magic_number, sizeof(unsigned long));
+        set_metadata(result + byte_count, byte_count);
+        tui_printf("checking metadata was set correctly\n");
+        verify_metadata(get_metadata(result + byte_count));
 
-        ctx->i += needed_bytes;
-        char * result = start_magic + sizeof(unsigned long);
         verify_fixed_buffer_allocation(result);
         return result;
     } else {
@@ -456,7 +540,11 @@ static void* fixed_buffer_realloc(struct Allocator self, void * old_mem, unsigne
     simple_assert(mem != NULL, "NULL memory buffer given to realloc");
     debug_assert(long, (long)(mem - ctx->buf), >, (long)0);
     debug_assert(void_pointer, (void*)mem, <, (void*)ctx->end);
+    verify_fixed_buffer_allocation(old_mem);
 
+    (void)new_byte_count;
+
+    /*
     {
         char * start_byte_count_ptr = mem - (sizeof(unsigned long) * 2);
         char * start_magic_ptr = start_byte_count_ptr + sizeof(unsigned long);
@@ -479,7 +567,7 @@ static void* fixed_buffer_realloc(struct Allocator self, void * old_mem, unsigne
             debug_assert(unsigned_long, end_byte_count, ==, start_byte_count);
 
 
-            /*For now, just alloc new memory and don't check if memory can be allocated in place*/
+            For now, just alloc new memory and don't check if memory can be allocated in place
             {
                 char * new_mem = self.alloc(self, new_byte_count);
                 unsigned long i = 0;
@@ -494,7 +582,7 @@ static void* fixed_buffer_realloc(struct Allocator self, void * old_mem, unsigne
             }
 
         }
-    }
+    } */
     return NULL;
 }
 #else

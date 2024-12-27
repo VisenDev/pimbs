@@ -2,7 +2,6 @@
 #define STRUTILS_H
 
 #include "attributes.h"
-#include "allocator.h"
 
 typedef struct {
     char * str;
@@ -37,23 +36,5 @@ static unsigned long string_length(const char * const str, const unsigned long m
     return i;
 }
 
-
-NODISCARD MAY_ALLOCATE
-static char * string_copy(Allocator a, const char * const str, unsigned long maxlen)
-{
-    const unsigned long len = string_length(str, maxlen);
-    char * buf = a.alloc(a, sizeof(char) * (len + 1));
-    unsigned long i = 0;
-    if(buf == NULL) {
-        return NULL;
-    }
-
-    for(i = 0; i < len + 1; ++i) {
-        buf[i] = str[i];
-    }
-
-    debug_assert(char, buf[len], ==, 0);
-    return buf;
-}
 
 #endif /*STRUTILS.H*/

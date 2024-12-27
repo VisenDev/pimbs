@@ -1,5 +1,5 @@
 #if !defined(TESTING_H) \
-    || (defined(TESTING_IMPLEMENTATION) && !defined(TESTING_IMPLEMENTED))
+    /*|| (defined(TESTING_IMPLEMENTATION) && !defined(TESTING_IMPLEMENTED))*/
 
 #define TESTING_H
 #ifdef TESTING_IMPLEMENTATION
