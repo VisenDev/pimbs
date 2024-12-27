@@ -343,20 +343,98 @@ Allocator always_failing_allocator(void)
 typedef struct {
     char * buf;
     char * end;
-    char * next_alloc;
+    unsigned long i;
 } FixedBufferCtx;
 
+static void memory_copy(void * dest, const void * const src, const unsigned long byte_count)
+#ifdef ALLOCATOR_IMPLEMENTATION
+{
+    char * destbuf = dest;
+    const char * const srcbuf = src;
+    unsigned long i = 0;
+    for(i = 0; i < byte_count; ++i) {
+        destbuf[i] = srcbuf[i];
+    }
+}
+#else
+;
+#endif
+
+
+/* fixed buffer allocation memory layout
+ * MAGIC is a special number used to detect if buffer overruns have happened
+ *
+ *                  [byte_count number of bytes]
+ * byte_count, MAGIC|   ...mem...              |MAGIC, byte_count
+ *                  ^
+ *                  | returned pointer
+ */
+
+typedef struct {
+    char premagic[4]; 
+    unsigned long byte_count;
+    char postmagic[4];
+} FixedBufferAllocationMetadata; 
+
+#define MAGIC {0xDE, 0xAD, 0xBE, 0xEF}
+
+static void verify_magic(char magic[4]) 
+#ifdef ALLOCATOR_IMPLEMENTATION
+{
+    const char valid[4] = MAGIC;
+    unsigned int i = 0;
+    for(i = 0; i < 4; ++i) {
+        debug_assert(char, magic[i], ==, valid[i]);
+    }
+
+}
+#else
+;
+#endif
+
+static void verify_fixed_buffer_allocation(void * mem)
+#ifdef ALLOCATOR_IMPLEMENTATION
+{
+    char * buf = mem;
+    FixedBufferAllocationMetadata * start;
+    FixedBufferAllocationMetadata * end;
+    memory_copy(start, mem - sizeof(FixedBufferAllocationMetadata));
+    verify_magic(start->premagic);
+    verify_magic(start->postmagic);
+
+    memory_copy(end, mem + start->byte_count);  
+    verify_magic(start->premagic);
+    verify_magic(start->postmagic);
+    debug_assert(unsigned_long, start->byte_count, ==, end->byte_count);
+}
+#else
+;
+#endif
 
 NODISCARD 
 static void* fixed_buffer_alloc (struct Allocator self, unsigned long byte_count)
 #ifdef ALLOCATOR_IMPLEMENTATION
 {
     FixedBufferCtx * ctx = self.ctx;
+    const unsigned long needed_bytes = byte_count + (4 * sizeof(unsigned long));
 
-    if((ctx->end - ctx->next_alloc) > byte_count) {
-        char * mem = next_alloc;
-        ctx->next_alloc = mem + byte_count;
-        return mem;
+    if((ctx->buf + ctx->i + needed_bytes) < ctx->end) {
+
+        char * start_byte_count = (ctx->buf + ctx->i);
+        char * start_magic = start_byte_count + sizeof(unsigned long);
+        char * end_magic = start_magic + byte_count;
+        char * end_byte_count = end_magic + sizeof(unsigned long);
+        const unsigned long magic_number = MAGIC;
+
+        memory_copy(start_byte_count, &byte_count, sizeof(unsigned long));
+        memory_copy(end_byte_count, &byte_count, sizeof(unsigned long));
+        memory_copy(start_magic, &magic_number, sizeof(unsigned long));
+        memory_copy(end_magic, &magic_number, sizeof(unsigned long));
+
+        ctx->i += needed_bytes;
+        char * result = start_magic + sizeof(unsigned long);
+        verify_fixed_buffer_allocation(result);
+        return result;
     } else {
         return NULL;
     }
@@ -369,8 +447,55 @@ NODISCARD
 static void* fixed_buffer_realloc(struct Allocator self, void * old_mem, unsigned long new_byte_count)
 #ifdef ALLOCATOR_IMPLEMENTATION
 {
-    char * mem = fixed_buffer_alloc(self, new_byte_count);
-    char * old_mem_bytes = old_mem;
+
+    FixedBufferCtx * ctx = self.ctx;
+    char * mem = old_mem;
+
+
+    /*bounds check*/
+    simple_assert(mem != NULL, "NULL memory buffer given to realloc");
+    debug_assert(long, (long)(mem - ctx->buf), >, (long)0);
+    debug_assert(void_pointer, (void*)mem, <, (void*)ctx->end);
+
+    {
+        char * start_byte_count_ptr = mem - (sizeof(unsigned long) * 2);
+        char * start_magic_ptr = start_byte_count_ptr + sizeof(unsigned long);
+        unsigned long start_byte_count = 0;
+        unsigned long start_magic = 0;
+        unsigned long end_magic = 0;
+        unsigned long end_byte_count = 0;
+        const unsigned long magic = MAGIC;
+
+        memory_copy(&start_byte_count, start_byte_count_ptr, sizeof(unsigned long));
+        memory_copy(&start_magic, start_magic_ptr, sizeof(unsigned long));
+        {
+            char * end_magic_ptr = start_magic_ptr + start_byte_count + sizeof(unsigned long);
+            char * end_byte_count_ptr = end_magic_ptr + sizeof(unsigned long);
+            memory_copy(&end_magic, end_magic_ptr, sizeof(unsigned long));
+            memory_copy(&end_byte_count, end_byte_count_ptr, sizeof(unsigned long));
+
+            debug_assert(unsigned_long, start_magic, ==, magic);
+            debug_assert(unsigned_long, end_magic, ==, magic);
+            debug_assert(unsigned_long, end_byte_count, ==, start_byte_count);
+
+
+            /*For now, just alloc new memory and don't check if memory can be allocated in place*/
+            {
+                char * new_mem = self.alloc(self, new_byte_count);
+                unsigned long i = 0;
+                if(new_mem == NULL) {
+                    return NULL;
+                } else {
+                    for(i = 0; i < new_byte_count; ++i) {
+                        new_mem[i] = mem[i];
+                    }
+                    return new_mem;
+                }
+            }
+
+        }
+    }
+    return NULL;
 }
 #else
 ;
@@ -379,29 +504,42 @@ static void* fixed_buffer_realloc(struct Allocator self, void * old_mem, unsigne
 static void fixed_buffer_free(struct Allocator self, void * mem)
 #ifdef ALLOCATOR_IMPLEMENTATION
 {
-    (void)self; /*ignore ctx*/
-    (void)mem;
+    (void) self;
+    (void) mem;
+    /*FixedBufferCtx * ctx = self.ctx;
+    char * mem_buf = mem;*/
+
+
+    /*TODO implement free*/
+
+    /*const unsigned long * byte_count = mem_buf - sizeof(unsigned long);*/
+    /*simple_assert(ctx->buf - old_mem_buf > 0)
+    simple_assert(old_mem_buf < ctx->end);
+    if(old_mem == ctx->top_alloc) {
+        ctx->next_alloc = ctx->top_alloc + new_byte_count;
+        return old_mem;
+        */
 }
 #else
 ;
 #endif
 
 NODISCARD PURE_FUNCTION
-Allocator fixed_buffer_allocator(char * buf, const unsigned long buflen)
+Allocator fixed_buffer_allocator(char * buffer, const unsigned long buflen)
 #ifdef ALLOCATOR_IMPLEMENTATION
 {
-    FixedBufferCtx * ctx = buf;
+    void * buf = buffer;
+    FixedBufferCtx * ctx = (FixedBufferCtx*)buf;
     Allocator result = {0};
-    simple_assert(buflen >= 32, "buffer too small")
-    ctx->buf = buf + sizeof(FixedBufferCtx);
-    ctx->end = buf + buflen;
-    ctx->top_alloc = NULL;
-    ctx->top_alloc_end = ctx->buf;
+    simple_assert(buflen >= 32, "buffer too small");
+    ctx->buf = buffer + sizeof(FixedBufferCtx);
+    ctx->end = buffer + buflen;
+    ctx->i = 0;
 
     result.ctx = ctx;
-    result.alloc = &fixed_buffer_alloc,
-    result.realloc = &fixed_buffer_realloc,
-    result.free = &fixed_buffer_free,
+    result.alloc = &fixed_buffer_alloc;
+    result.realloc = &fixed_buffer_realloc;
+    result.free = &fixed_buffer_free;
     return result;
 }
 #else
@@ -411,5 +549,3 @@ Allocator fixed_buffer_allocator(char * buf, const unsigned long buflen)
 
 #endif /*ALLOCATOR_H*/
 
-
-#endif /*ALLOCATOR_H*/

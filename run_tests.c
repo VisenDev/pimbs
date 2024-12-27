@@ -33,11 +33,16 @@
 #define HASH_TYPE long
 #include "src/hash.h"
 
+
 int main(void) {
     TestingState t = testing_init();
-    Allocator libc = libc_allocator();
-    /*Allocator logging = logging_allocator(&libc);*/
-    Allocator a = leak_check_allocator(&libc);
+
+    #define buflen 0xFFFFFFFF
+    static char buf[buflen];
+    Allocator fixed = fixed_buffer_allocator(buf, buflen);
+    /*Allocator libc = libc_allocator();*/
+    Allocator logging = logging_allocator(&fixed);
+    Allocator a = leak_check_allocator(&logging);
 
     if(0) {
         cleanup:
