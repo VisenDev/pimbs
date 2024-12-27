@@ -4,12 +4,10 @@
 #define TESTING_H
 #ifdef TESTING_IMPLEMENTATION
     #define TESTING_IMPLEMENTED
-
-    #ifndef TUI_H
-        #error "\"tui.h\" must be included before \"testing.h\" is implemented"
-    #endif
 #endif
 
+#include "tui.h"
+#include "strutils.h"
 
 typedef struct {
    const char* name;
@@ -22,14 +20,11 @@ typedef struct {
     TestingTracker active;
 } TestingState;
 
-/*TODO remove string.h dependency*/
-#include <string.h>
-
 static void testing_print_header(const char * str)
 #ifdef TESTING_IMPLEMENTATION
 {
     const unsigned int desired_width = 40;
-    const unsigned int len = (unsigned int)strnlen(str, 40);
+    const unsigned int len = (unsigned int)string_length(str, 40);
     const unsigned int padding_needed = desired_width - len;
     const unsigned int pre_padding = padding_needed / 2;
     const unsigned int post_padding = padding_needed - pre_padding;

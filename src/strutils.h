@@ -41,15 +41,18 @@ static unsigned long string_length(const char * const str, const unsigned long m
 NODISCARD MAY_ALLOCATE
 static char * string_copy(Allocator a, const char * const str, unsigned long maxlen)
 {
-    const size_t len = string_length(str, maxlen);
+    const unsigned long len = string_length(str, maxlen);
     char * buf = a.alloc(a, sizeof(char) * (len + 1));
-    memcpy(buf, str, len + 1);
+    unsigned long i = 0;
     if(buf == NULL) {
         return NULL;
     }
 
+    for(i = 0; i < len + 1; ++i) {
+        buf[i] = str[i];
+    }
+
     debug_assert(char, buf[len], ==, 0);
-    debug_assert(int, strncmp(buf, str, len), ==, 0);
     return buf;
 }
 

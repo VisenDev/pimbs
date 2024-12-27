@@ -30,7 +30,7 @@ typedef struct Allocator {
 
 /*LIBC*/
 
-NODISCARD MAY_ALLOCATE
+NODISCARD
 static void* libc_alloc (struct Allocator self, unsigned long byte_count)
 #ifdef ALLOCATOR_IMPLEMENTATION
 {
@@ -41,7 +41,7 @@ static void* libc_alloc (struct Allocator self, unsigned long byte_count)
 ;
 #endif
 
-NODISCARD MAY_ALLOCATE
+NODISCARD
 static void* libc_realloc (struct Allocator self, void * old_mem, unsigned long new_byte_count)
 #ifdef ALLOCATOR_IMPLEMENTATION
 {
@@ -83,7 +83,7 @@ Allocator libc_allocator(void)
 
 /*LOGGING*/
 
-NODISCARD MAY_ALLOCATE
+NODISCARD 
 static void* logging_alloc (struct Allocator self, unsigned long byte_count)
 #ifdef ALLOCATOR_IMPLEMENTATION
 {
@@ -96,7 +96,7 @@ static void* logging_alloc (struct Allocator self, unsigned long byte_count)
 ;
 #endif
 
-NODISCARD MAY_ALLOCATE
+NODISCARD 
 static void* logging_realloc (struct Allocator self, void * old_mem, unsigned long new_byte_count)
 #ifdef ALLOCATOR_IMPLEMENTATION
 {
@@ -163,7 +163,7 @@ typedef struct {
 } LeakCheckCtx;
 
 
-NODISCARD MAY_ALLOCATE
+NODISCARD 
 static void * leak_check_alloc(struct Allocator self, unsigned long byte_count)
 #ifdef ALLOCATOR_IMPLEMENTATION
 {
@@ -184,7 +184,7 @@ static void * leak_check_alloc(struct Allocator self, unsigned long byte_count)
 ;
 #endif
 
-NODISCARD MAY_ALLOCATE
+NODISCARD 
 static void * leak_check_realloc (struct Allocator self, void * old_mem, unsigned long new_byte_count)
 #ifdef ALLOCATOR_IMPLEMENTATION
 {
@@ -287,7 +287,7 @@ void leak_check_allocator_free(struct Allocator self)
 
 /*ALWAYSFAILING*/
 
-NODISCARD MAY_ALLOCATE
+NODISCARD 
 static void* always_failing_alloc (struct Allocator self, unsigned long byte_count)
 #ifdef ALLOCATOR_IMPLEMENTATION
 {
@@ -299,7 +299,7 @@ static void* always_failing_alloc (struct Allocator self, unsigned long byte_cou
 ;
 #endif
 
-NODISCARD MAY_ALLOCATE
+NODISCARD 
 static void* always_failing_realloc (struct Allocator self, void * old_mem, unsigned long new_byte_count)
 #ifdef ALLOCATOR_IMPLEMENTATION
 {
@@ -337,6 +337,79 @@ Allocator always_failing_allocator(void)
 #else
 ;
 #endif
+
+
+/* Fixed Buffer */
+typedef struct {
+    char * buf;
+    char * end;
+    char * next_alloc;
+} FixedBufferCtx;
+
+
+NODISCARD 
+static void* fixed_buffer_alloc (struct Allocator self, unsigned long byte_count)
+#ifdef ALLOCATOR_IMPLEMENTATION
+{
+    FixedBufferCtx * ctx = self.ctx;
+
+    if((ctx->end - ctx->next_alloc) > byte_count) {
+        char * mem = next_alloc;
+        ctx->next_alloc = mem + byte_count;
+        return mem;
+    } else {
+        return NULL;
+    }
+}
+#else
+;
+#endif
+
+NODISCARD 
+static void* fixed_buffer_realloc(struct Allocator self, void * old_mem, unsigned long new_byte_count)
+#ifdef ALLOCATOR_IMPLEMENTATION
+{
+    char * mem = fixed_buffer_alloc(self, new_byte_count);
+    char * old_mem_bytes = old_mem;
+}
+#else
+;
+#endif
+
+static void fixed_buffer_free(struct Allocator self, void * mem)
+#ifdef ALLOCATOR_IMPLEMENTATION
+{
+    (void)self; /*ignore ctx*/
+    (void)mem;
+}
+#else
+;
+#endif
+
+NODISCARD PURE_FUNCTION
+Allocator fixed_buffer_allocator(char * buf, const unsigned long buflen)
+#ifdef ALLOCATOR_IMPLEMENTATION
+{
+    FixedBufferCtx * ctx = buf;
+    Allocator result = {0};
+    simple_assert(buflen >= 32, "buffer too small")
+    ctx->buf = buf + sizeof(FixedBufferCtx);
+    ctx->end = buf + buflen;
+    ctx->top_alloc = NULL;
+    ctx->top_alloc_end = ctx->buf;
+
+    result.ctx = ctx;
+    result.alloc = &fixed_buffer_alloc,
+    result.realloc = &fixed_buffer_realloc,
+    result.free = &fixed_buffer_free,
+    return result;
+}
+#else
+;
+#endif
+
+
+#endif /*ALLOCATOR_H*/
 
 
 #endif /*ALLOCATOR_H*/
