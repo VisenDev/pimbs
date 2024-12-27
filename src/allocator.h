@@ -397,127 +397,21 @@ typedef struct {
 } FixedBufferCtx;
 
 
-/* fixed buffer allocation memory layout
- * MAGIC is a special number used to detect if buffer overruns have happened
- *
- *                  [byte_count number of bytes]
- * byte_count, MAGIC|   ...mem...              |MAGIC, byte_count
- *                  ^
- *                  | returned pointer
- */
-
-typedef struct {
-    char premagic[4]; 
-    unsigned long byte_count;
-    char postmagic[4];
-} FixedBufferAllocationMetadata; 
-
-#define MAGIC {0xDE, 0xAD, 0xBE, 0xEF}
-
-static void verify_magic(const char magic[4]) 
-#ifdef ALLOCATOR_IMPLEMENTATION
-{
-    const char valid[4] = MAGIC;
-    unsigned int i = 0;
-    tui_printf("verifying magic\n");
-    for(i = 0; i < 4; ++i) {
-        debug_assert(char, valid[i], ==, valid[i]);
-        debug_assert(char, magic[i], ==, valid[i]);
-    }
-
-}
-#else
-;
-#endif
-
-
-static void verify_metadata(const FixedBufferAllocationMetadata metadata)
-#ifdef ALLOCATOR_IMPLEMENTATION
-{
-    tui_printf("verifying metadata\n");
-    verify_magic(metadata.premagic);
-    verify_magic(metadata.postmagic);
-}
-#else
-;
-#endif
-
-static FixedBufferAllocationMetadata get_metadata(void * metadata_location_ptr) 
-#ifdef ALLOCATOR_IMPLEMENTATION
-{
-    FixedBufferAllocationMetadata result = {0}; 
-    tui_printf("getting metadata\n");
-    memory_copy(metadata_location_ptr, &result, sizeof(FixedBufferAllocationMetadata));
-    /*verify_metadata(result);*/
-    return result;
-}
-#else
-;
-#endif
-
-
-static void set_metadata(void * metadata_location_ptr, const unsigned long byte_count) 
-#ifdef ALLOCATOR_IMPLEMENTATION
-{
-    FixedBufferAllocationMetadata metadata = {0}; 
-    char magic[4] = MAGIC;
-    verify_magic(magic);
-    tui_printf1("setting metadata: %lu\n", byte_count);
-    memory_copy(&metadata.premagic, &magic, 4);
-    memory_copy(&metadata.postmagic, &magic, 4);
-    metadata.byte_count = byte_count;
-    verify_metadata(metadata);
-    memory_copy(metadata_location_ptr, &metadata, sizeof(FixedBufferAllocationMetadata));
-    tui_printf("verifying metadata was set correctly\n");
-    verify_metadata(get_metadata(metadata_location_ptr));
-}
-#else
-;
-#endif
-
-
-
-
-
-
-static void verify_fixed_buffer_allocation(void * mem)
-#ifdef ALLOCATOR_IMPLEMENTATION
-{
-    char * buf = mem;
-    const FixedBufferAllocationMetadata start = get_metadata(buf - sizeof(FixedBufferAllocationMetadata));
-    tui_printf("verifing fixed buffer allocation\n");
-    verify_metadata(start);
-    {
-        const FixedBufferAllocationMetadata end = get_metadata(buf + start.byte_count);
-        verify_metadata(end);
-    }
-
-}
-#else
-;
-#endif
-
 NODISCARD 
 static void* fixed_buffer_alloc (struct Allocator self, unsigned long byte_count)
 #ifdef ALLOCATOR_IMPLEMENTATION
 {
     FixedBufferCtx * ctx = self.ctx;
-    const unsigned long needed_bytes = byte_count + (2 * sizeof(FixedBufferAllocationMetadata));
-    char * top = ctx->buf + ctx->i;
+    const unsigned short alignment = ALIGNOF(unsigned long);
+    const unsigned short padding_bytes = (alignment - (ctx->i % alignment)) % alignment;
+    const unsigned long bytes_needed = byte_count + sizeof(unsigned long) + padding_bytes;
 
-    tui_printf1("Allocating %lu bytes\n", byte_count);
-
-    if((top + needed_bytes) < ctx->end) {
-        char * result = top + sizeof(FixedBufferAllocationMetadata);
-        set_metadata(top, byte_count);
-        tui_printf("checking metadata was set correctly\n");
-        verify_metadata(get_metadata(top));
-
-        set_metadata(result + byte_count, byte_count);
-        tui_printf("checking metadata was set correctly\n");
-        verify_metadata(get_metadata(result + byte_count));
-
-        verify_fixed_buffer_allocation(result);
+    /* check buffer capacity */
+    if(ctx->buf + ctx->i + bytes_needed < ctx->end) {
+        void * top = ctx->buf + ctx->i + padding_bytes;
+        char * result = (char*)top + sizeof(unsigned long);
+        ctx->i += bytes_needed;
+        *(unsigned long *)top = byte_count;
         return result;
     } else {
         return NULL;
@@ -531,59 +425,11 @@ NODISCARD
 static void* fixed_buffer_realloc(struct Allocator self, void * old_mem, unsigned long new_byte_count)
 #ifdef ALLOCATOR_IMPLEMENTATION
 {
-
-    FixedBufferCtx * ctx = self.ctx;
-    char * mem = old_mem;
-
-
-    /*bounds check*/
-    simple_assert(mem != NULL, "NULL memory buffer given to realloc");
-    debug_assert(long, (long)(mem - ctx->buf), >, (long)0);
-    debug_assert(void_pointer, (void*)mem, <, (void*)ctx->end);
-    verify_fixed_buffer_allocation(old_mem);
-
-    (void)new_byte_count;
-
-    /*
-    {
-        char * start_byte_count_ptr = mem - (sizeof(unsigned long) * 2);
-        char * start_magic_ptr = start_byte_count_ptr + sizeof(unsigned long);
-        unsigned long start_byte_count = 0;
-        unsigned long start_magic = 0;
-        unsigned long end_magic = 0;
-        unsigned long end_byte_count = 0;
-        const unsigned long magic = MAGIC;
-
-        memory_copy(&start_byte_count, start_byte_count_ptr, sizeof(unsigned long));
-        memory_copy(&start_magic, start_magic_ptr, sizeof(unsigned long));
-        {
-            char * end_magic_ptr = start_magic_ptr + start_byte_count + sizeof(unsigned long);
-            char * end_byte_count_ptr = end_magic_ptr + sizeof(unsigned long);
-            memory_copy(&end_magic, end_magic_ptr, sizeof(unsigned long));
-            memory_copy(&end_byte_count, end_byte_count_ptr, sizeof(unsigned long));
-
-            debug_assert(unsigned_long, start_magic, ==, magic);
-            debug_assert(unsigned_long, end_magic, ==, magic);
-            debug_assert(unsigned_long, end_byte_count, ==, start_byte_count);
-
-
-            For now, just alloc new memory and don't check if memory can be allocated in place
-            {
-                char * new_mem = self.alloc(self, new_byte_count);
-                unsigned long i = 0;
-                if(new_mem == NULL) {
-                    return NULL;
-                } else {
-                    for(i = 0; i < new_byte_count; ++i) {
-                        new_mem[i] = mem[i];
-                    }
-                    return new_mem;
-                }
-            }
-
-        }
-    } */
-    return NULL;
+    /*FixedBufferCtx * ctx = self.ctx;*/
+    const unsigned long old_mem_byte_count = *(((unsigned long *) old_mem) - 1);
+    char * mem = fixed_buffer_alloc(self, new_byte_count);
+    memory_copy(mem, old_mem, old_mem_byte_count); 
+    return mem;
 }
 #else
 ;
@@ -594,19 +440,6 @@ static void fixed_buffer_free(struct Allocator self, void * mem)
 {
     (void) self;
     (void) mem;
-    /*FixedBufferCtx * ctx = self.ctx;
-    char * mem_buf = mem;*/
-
-
-    /*TODO implement free*/
-
-    /*const unsigned long * byte_count = mem_buf - sizeof(unsigned long);*/
-    /*simple_assert(ctx->buf - old_mem_buf > 0)
-    simple_assert(old_mem_buf < ctx->end);
-    if(old_mem == ctx->top_alloc) {
-        ctx->next_alloc = ctx->top_alloc + new_byte_count;
-        return old_mem;
-        */
 }
 #else
 ;
@@ -619,7 +452,7 @@ Allocator fixed_buffer_allocator(char * buffer, const unsigned long buflen)
     void * buf = buffer;
     FixedBufferCtx * ctx = (FixedBufferCtx*)buf;
     Allocator result = {0};
-    simple_assert(buflen >= 32, "buffer too small");
+    simple_assert(buflen >= 64, "buffer too small");
     ctx->buf = buffer + sizeof(FixedBufferCtx);
     ctx->end = buffer + buflen;
     ctx->i = 0;

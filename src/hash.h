@@ -50,7 +50,7 @@
 
 
 
-NODISCARD MAY_ALLOCATE
+NODISCARD 
 static char * string_copy(Allocator a, const char * const str, unsigned long maxlen)
 {
     const unsigned long len = string_length(str, maxlen);

@@ -16,7 +16,7 @@
 
 #ifndef LOG_FUNCTION
     PURE_FUNCTION
-    static inline int dummy_log_function(const char * format, ...) {
+    static int dummy_log_function(const char * format, ...) {
         (void)format;
         return 0;
     }

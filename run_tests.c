@@ -1,10 +1,10 @@
-#include <stdio.h>
-#define LOG_FUNCTION printf
+/*#include <stdio.h>
+#define LOG_FUNCTION printf*/
 
 #define TESTING_IMPLEMENTATION
 #include "src/testing.h"
 
-#define USE_CSTDLIB
+/*#define USE_CSTDLIB*/
 #define ALLOCATOR_IMPLEMENTATION
 #include "src/allocator.h"
 
@@ -37,12 +37,12 @@
 int main(void) {
     TestingState t = testing_init();
 
-    /*#define buflen 0xFFFFFFFF*/
-    /*static char buf[buflen];*/
-    /*Allocator fixed = fixed_buffer_allocator(buf, buflen);*/
-    Allocator libc = libc_allocator();
-    /*Allocator logging = logging_allocator(&libc);*/
-    Allocator a = leak_check_allocator(&libc);
+    #define buflen 0xFFFFFF
+    static char buf[buflen];
+    Allocator fixed = fixed_buffer_allocator(buf, buflen);
+    /*Allocator libc = libc_allocator();*/
+    /*Allocator logging = logging_allocator(&fixed);*/
+    Allocator a = leak_check_allocator(&fixed);
 
     test_memory_copy(&t);
 
