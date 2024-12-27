@@ -24,31 +24,9 @@ typedef struct Allocator {
 } Allocator;
 
 
-/*TODO remove dependency on stdlib.h and string.h*/
-#include <stdlib.h>
-#include <string.h>
+#ifdef USE_CSTDLIB
 
-
-/*UTILS*/
-NODISCARD MAY_ALLOCATE
-static inline char * string_copy(Allocator a, const char * const str, size_t maxlen)
-#ifdef ALLOCATOR_IMPLEMENTATION
-{
-    const size_t len = strnlen(str, maxlen);
-    char * buf = a.alloc(a, sizeof(char) * (len + 1));
-    memcpy(buf, str, len + 1);
-    if(buf == NULL) {
-        return NULL;
-    }
-
-    debug_assert(char, buf[len], ==, 0);
-    debug_assert(int, strncmp(buf, str, len), ==, 0);
-    return buf;
-}
-#else
-;
-#endif
-
+#include "stdlib.h"
 
 /*LIBC*/
 
@@ -85,19 +63,22 @@ static void libc_free(struct Allocator self, void * mem)
 #endif
 
 NODISCARD PURE_FUNCTION
-static Allocator libc_allocator(void)
+Allocator libc_allocator(void)
 #ifdef ALLOCATOR_IMPLEMENTATION
 {
-    return (Allocator){
-        .ctx = NULL,
-        .alloc = &libc_alloc,
-        .realloc = &libc_realloc,
-        .free = &libc_free,
+    Allocator result = {
+        NULL,
+        &libc_alloc,
+        &libc_realloc,
+        &libc_free,
     };
+    return result;
 }
 #else
 ;
 #endif
+
+#endif /*USE_CSTDLIB*/
 
 
 /*LOGGING*/
@@ -108,7 +89,7 @@ static void* logging_alloc (struct Allocator self, unsigned long byte_count)
 {
     Allocator child = *(Allocator *)self.ctx;
     void * bytes = child.alloc(child, byte_count);
-    tui_printf(TUI_YELLOW"Allocating %p with %lu bytes via ctx %p\n", bytes, byte_count, self.ctx);
+    tui_printf3(TUI_YELLOW"Allocating %p with %lu bytes via ctx %p\n", bytes, byte_count, self.ctx);
     return bytes;
 }
 #else
@@ -121,7 +102,7 @@ static void* logging_realloc (struct Allocator self, void * old_mem, unsigned lo
 {
     Allocator child = *(Allocator *) self.ctx;
     void* bytes = child.realloc(child, old_mem, new_byte_count);
-    tui_printf(TUI_YELLOW"Reallocating %p to %p to store %lu total bytes via ctx %p\n", old_mem, bytes, new_byte_count, self.ctx);
+    tui_printf4(TUI_YELLOW"Reallocating %p to %p to store %lu total bytes via ctx %p\n", old_mem, bytes, new_byte_count, self.ctx);
     return bytes;
 }
 #else
@@ -132,7 +113,7 @@ static void logging_free(struct Allocator self, void * mem)
 #ifdef ALLOCATOR_IMPLEMENTATION
 {
     Allocator child = *(Allocator *) self.ctx;
-    tui_printf(TUI_YELLOW"Freeing %p via ctx %p\n", mem, self.ctx);
+    tui_printf2(TUI_YELLOW"Freeing %p via ctx %p\n", mem, self.ctx);
     child.free(child, mem);
 }
 #else
@@ -140,15 +121,17 @@ static void logging_free(struct Allocator self, void * mem)
 #endif
 
 NODISCARD PURE_FUNCTION
-static inline Allocator logging_allocator(Allocator *child)
+Allocator logging_allocator(Allocator *child)
 #ifdef ALLOCATOR_IMPLEMENTATION
 {
-    return (Allocator){
-        .ctx = child,
-        .alloc = &logging_alloc,
-        .realloc = &logging_realloc,
-        .free = &logging_free,
+    Allocator result = {
+        NULL,
+        &logging_alloc,
+        &logging_realloc,
+        &logging_free,
     };
+    result.ctx = child;
+    return result;
 }
 #else
 ;
@@ -165,7 +148,7 @@ typedef struct {
 #define VEC_TYPE Allocation
 #define VEC_NAME AllocRecords
 
-#if defined(ALLOCATOR_IMPLEMENTATION)// && !defined(VEC_IMPLEMENTATION)
+#if defined(ALLOCATOR_IMPLEMENTATION)
     #define VEC_IMPLEMENTATION
     #include "vec.h"
 #else
@@ -173,107 +156,9 @@ typedef struct {
 #endif
 
 
-/*
-typedef struct {
-    Arena arena;
-    Allocator libc;
-    AllocRecords allocs;
-} TsodingArenaCtx;
-
-NODISCARD MAY_ALLOCATE
-void* tsoding_arena_alloc(struct Allocator self, unsigned long byte_count)
-#ifdef ALLOCATOR_IMPLEMENTATION
-{
-    TsodingArenaCtx * ctx = self.ctx;
-    void * mem =  arena_alloc(&ctx->arena, (size_t)byte_count);
-    const int err = AllocRecords_append(ctx->libc, &ctx->allocs, (Allocation){.ptr = mem, .byte_count = byte_count});
-    if(err != ERR_NONE) {
-        return NULL;
-    }
-    return mem;
-}
-#else
-;
-#endif
-
-
-NODISCARD MAY_ALLOCATE
-void* tsoding_arena_realloc (struct Allocator self, void * old_mem, unsigned long new_byte_count)
-#ifdef ALLOCATOR_IMPLEMENTATION
-{
-    TsodingArenaCtx * ctx = self.ctx;
-
-    Allocation * old = NULL;
-    for(unsigned long i = 0; i < ctx->allocs.len; ++i){
-        if(ctx->allocs.items[i].ptr == old_mem) {
-            old = &ctx->allocs.items[i];
-            break;    
-        }
-    }
-
-    debug_assert(void_pointer, (void*)old, !=, NULL);
-
-    void * new_mem = arena_realloc(&ctx->arena, old_mem, old->byte_count, new_byte_count);
-    if(new_mem == NULL) {
-        return NULL;
-    } else {
-        old->ptr = new_mem;
-        old->byte_count = new_byte_count;
-    }
-    return new_mem;
-}
-#else
-;
-#endif
-
-
-void tsoding_arena_free(struct Allocator self, void * mem)
-#ifdef ALLOCATOR_IMPLEMENTATION
-{
-    (void) self;
-    (void) mem;
-}
-#else
-;
-#endif
-
-NODISCARD
-Allocator tsoding_arena_allocator(void)
-#ifdef ALLOCATOR_IMPLEMENTATION
-{
-    TsodingArenaCtx * ctx = malloc(sizeof(TsodingArenaCtx));
-    ctx->arena = (Arena){0};
-    ctx->allocs = AllocRecords_init();
-    ctx->libc = libc_allocator();
-
-    return (Allocator){
-        .ctx = ctx,
-        .alloc = &tsoding_arena_alloc,
-        .realloc = &tsoding_arena_realloc,
-        .free = &tsoding_arena_free,
-    };
-}
-#else
-;
-#endif
-
-void tsoding_arena_allocator_free(Allocator * a)
-#ifdef ALLOCATOR_IMPLEMENTATION
-{
-    TsodingArenaCtx * ctx = a->ctx;
-    arena_free(&ctx->arena); 
-    AllocRecords_free(ctx->libc, &ctx->allocs);
-    free(ctx);
-}
-#else
-;
-#endif
-*/
-
-
 /*LEAKCHECK*/
 typedef struct {
-    Allocator child;
+    Allocator * child;
     AllocRecords alloc_records;
 } LeakCheckCtx;
 
@@ -283,9 +168,13 @@ static void * leak_check_alloc(struct Allocator self, unsigned long byte_count)
 #ifdef ALLOCATOR_IMPLEMENTATION
 {
     LeakCheckCtx * ctx = self.ctx;
-    void * mem = ctx->child.alloc(ctx->child, byte_count); 
-    const Allocation record = (Allocation){.ptr = mem, .byte_count = byte_count};
-    const int err = AllocRecords_append(ctx->child, &ctx->alloc_records, record);
+    void * mem = ctx->child->alloc(*ctx->child, byte_count); 
+    int err;
+    Allocation record = {0};
+
+    record.ptr = mem;
+    record.byte_count = byte_count;
+    err = AllocRecords_append(*ctx->child, &ctx->alloc_records, record);
     if(err != ERR_NONE) {
         return NULL;
     }
@@ -301,9 +190,10 @@ static void * leak_check_realloc (struct Allocator self, void * old_mem, unsigne
 {
     void * new_mem = NULL;
     LeakCheckCtx * ctx = self.ctx;
-
+    unsigned long i = 0;
     Allocation * old = NULL;
-    for(unsigned long i = 0; i < ctx->alloc_records.len; ++i){
+
+    for(i = 0; i < ctx->alloc_records.len; ++i){
         if(ctx->alloc_records.items[i].ptr == old_mem) {
             old = &ctx->alloc_records.items[i];
             break;    
@@ -312,7 +202,7 @@ static void * leak_check_realloc (struct Allocator self, void * old_mem, unsigne
 
     simple_assert(old != NULL, "old_mem pointer was not found");
 
-    new_mem = ctx->child.realloc(ctx->child, old_mem, new_byte_count);
+    new_mem = ctx->child->realloc(*ctx->child, old_mem, new_byte_count);
     if(new_mem == NULL) {
         return NULL;
     } else {
@@ -329,21 +219,20 @@ static void leak_check_free (struct Allocator self, void * mem)
 #ifdef ALLOCATOR_IMPLEMENTATION
 {
     LeakCheckCtx * ctx = self.ctx;
-    Allocation * old = NULL;
     int err;
-    unsigned long index = 0;
+    unsigned long i = 0;
+    long index = -1;
 
-    for(unsigned long i = 0; i < ctx->alloc_records.len; ++i){
+    for(i = 0; i < ctx->alloc_records.len; ++i){
         if(ctx->alloc_records.items[i].ptr == mem) {
-            old = &ctx->alloc_records.items[i];
-            index = i;
+            index = (long)i;
             break;    
         }
     }
-    simple_assert(old != NULL, "mem pointer was not found");
-    ctx->child.free(ctx->child, mem);
+    simple_assert(index != -1 , "mem pointer was not found");
+    ctx->child->free(*ctx->child, mem);
 
-    err = AllocRecords_swap(&ctx->alloc_records, index, ctx->alloc_records.len - 1);
+    err = AllocRecords_swap(&ctx->alloc_records, (unsigned long) index, ctx->alloc_records.len - 1);
     simple_assert(err == ERR_NONE, "Indexes for swap are incorrect");
     ctx->alloc_records.len -= 1;
 }
@@ -363,31 +252,31 @@ static int leak_check_count_leaks(struct Allocator self)
 #endif
 
 NODISCARD PURE_FUNCTION
-static Allocator leak_check_allocator(struct Allocator child)
+Allocator leak_check_allocator(Allocator * child)
 #ifdef ALLOCATOR_IMPLEMENTATION
 {
-    LeakCheckCtx * ctx = child.alloc(child, sizeof(LeakCheckCtx));
+    Allocator result = {0};
+
+    LeakCheckCtx * ctx = child->alloc(*child, sizeof(LeakCheckCtx));
     ctx->alloc_records = AllocRecords_init();
     ctx->child = child;
 
-    return (Allocator){
-        .ctx = ctx,
-        .alloc = &leak_check_alloc,
-        .realloc = &leak_check_realloc,
-        .free = &leak_check_free,
-    };
+    result.ctx = ctx;
+    result.alloc = &leak_check_alloc;
+    result.realloc = &leak_check_realloc;
+    result.free = &leak_check_free;
+    return result;
 }
 #else
 ;
 #endif
 
 
-static void leak_check_allocator_free(struct Allocator self)
+void leak_check_allocator_free(struct Allocator self)
 #ifdef ALLOCATOR_IMPLEMENTATION
 {
     LeakCheckCtx * ctx = self.ctx;
-    AllocRecords_free(ctx->child, &ctx->alloc_records);
-    ctx->child.free(ctx->child, ctx);
+    AllocRecords_free(*ctx->child, &ctx->alloc_records);
 }
 #else
 ;
@@ -434,15 +323,16 @@ static void always_failing_free(struct Allocator self, void * mem)
 #endif
 
 NODISCARD PURE_FUNCTION
-static Allocator always_failing_allocator(void)
+Allocator always_failing_allocator(void)
 #ifdef ALLOCATOR_IMPLEMENTATION
 {
-    return (Allocator){
-        .ctx = NULL,
-        .alloc = &always_failing_alloc,
-        .realloc = &always_failing_realloc,
-        .free = &always_failing_free,
+    Allocator result = {
+        NULL,
+        &always_failing_alloc,
+        &always_failing_realloc,
+        &always_failing_free,
     };
+    return result;
 }
 #else
 ;

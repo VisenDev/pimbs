@@ -10,16 +10,16 @@
 
 #ifndef SSET_TYPE 
 #error "SSET_TYPE must be defined before including \"sset.h\""
-#endif //SSET TYPE
+#endif /*SSET TYPE*/
        
 #ifndef SSET_NAME
 #error "SSET_NAME must be defined before including \"sset.h\""
-#endif //SSET_NAME
+#endif /*SSET_NAME*/
        
-// Subtypes
+/* Subtypes */
 #ifdef SSET_IMPLEMENTATION
    #define VEC_IMPLEMENTATION
-#endif //SSET_IMPLEMENTATION
+#endif /*SSET_IMPLEMENTATION*/
 #define Dense CONCAT(SSET_NAME, _dense)
 #define VEC_NAME Dense
 #define VEC_TYPE SSET_TYPE
@@ -27,7 +27,7 @@
 
 #ifdef SSET_IMPLEMENTATION
    #define VEC_IMPLEMENTATION
-#endif //SSET_IMPLEMENTATION
+#endif /*SSET_IMPLEMENTATION*/
 #define Sparse CONCAT(SSET_NAME, _sparse)
 #define VEC_NAME Sparse 
 #define VEC_TYPE long
@@ -35,7 +35,7 @@
 
 #ifdef SSET_IMPLEMENTATION
    #define VEC_IMPLEMENTATION
-#endif //SSET_IMPLEMENTATION
+#endif /*SSET_IMPLEMENTATION*/
 #define DenseToSparse CONCAT(SSET_NAME, _dense_to_sparse)
 #define VEC_NAME DenseToSparse
 #define VEC_TYPE unsigned long
@@ -52,20 +52,20 @@ typedef struct SSET_NAME {
 } SSET_NAME;
 
 NODISCARD
-static SSET_NAME CONCAT(SSET_NAME, _init) (void) 
+SSET_NAME CONCAT(SSET_NAME, _init) (void) 
 #ifdef SSET_IMPLEMENTATION
 {
-    return (SSET_NAME) {
-        .dense = CONCAT(Dense, _init)(),
-        .sparse = CONCAT(Sparse, _init)(),
-        .dense_to_sparse = CONCAT(DenseToSparse, _init)(),
-    };
+    SSET_NAME result = {0};
+    result.dense = CONCAT(Dense, _init)();
+    result.sparse = CONCAT(Sparse, _init)();
+    result.dense_to_sparse = CONCAT(DenseToSparse, _init)();
+    return result;
 }
 #else
 ;
 #endif
 
-static void CONCAT(SSET_NAME, _free) (Allocator a, SSET_NAME * self)
+void CONCAT(SSET_NAME, _free) (Allocator a, SSET_NAME * self)
 #ifdef SSET_IMPLEMENTATION
 {
     CONCAT(Dense, _free)(a, &self->dense);
@@ -77,7 +77,7 @@ static void CONCAT(SSET_NAME, _free) (Allocator a, SSET_NAME * self)
 #endif
 
 NODISCARD 
-static int CONCAT(SSET_NAME, _expand_sparse) (Allocator a, SSET_NAME * self, unsigned long required_length)
+int CONCAT(SSET_NAME, _expand_sparse) (Allocator a, SSET_NAME * self, unsigned long required_length)
 #ifdef SSET_IMPLEMENTATION
 {
     if(self->sparse.len < required_length) {
@@ -91,7 +91,7 @@ static int CONCAT(SSET_NAME, _expand_sparse) (Allocator a, SSET_NAME * self, uns
 
 
 NODISCARD 
-static int CONCAT(SSET_NAME, _put)(Allocator a, SSET_NAME * self, unsigned long index, SSET_TYPE value) 
+int CONCAT(SSET_NAME, _put)(Allocator a, SSET_NAME * self, unsigned long index, SSET_TYPE value) 
 #ifdef SSET_IMPLEMENTATION
 {
 
@@ -110,7 +110,7 @@ static int CONCAT(SSET_NAME, _put)(Allocator a, SSET_NAME * self, unsigned long 
     dense_index = self->sparse.items[index];
 
     if(dense_index == NULL_INDEX) {
-        //append new
+        /*append new*/
         err = CONCAT(Dense, _append)(a, &self->dense, value);
         if(err != 0) {
             return err;
@@ -121,7 +121,7 @@ static int CONCAT(SSET_NAME, _put)(Allocator a, SSET_NAME * self, unsigned long 
         }
         self->sparse.items[index] = (long)self->dense.len - 1;
     } else {
-        //replace existing
+        /*replace existing*/
         self->dense.items[dense_index] = value;
     }
 
@@ -132,49 +132,42 @@ static int CONCAT(SSET_NAME, _put)(Allocator a, SSET_NAME * self, unsigned long 
 #endif
 
 NODISCARD
-static int CONCAT(SSET_NAME, _delete)(SSET_NAME * self, const unsigned long index) 
+int CONCAT(SSET_NAME, _delete)(SSET_NAME * self, const unsigned long index) 
 #ifdef SSET_IMPLEMENTATION
 {
     int err = 0;
     long dense_index = NULL_INDEX;
 
 
-    //bounds checks
+    /*bounds checks*/
     if(index >= self->sparse.len) {
-        debug_printf("attempting to delete index %lu from sparse array of length %lu\n", index, self->sparse.len);
         return 1;
     }
 
     dense_index = self->sparse.items[index];
     if(dense_index == NULL_INDEX) {
-        debug_printf("attempting delete NULL_INDEX index %lu\n", index);
         return 1;
     }
 
-    //Swap top and index
+    /*Swap top and index*/
     err = CONCAT(Dense, _swap)(&self->dense, (unsigned long)dense_index, self->dense.len - 1); 
     if(err != 0) {
-        debug_printf("Swapping dense_index %ld and top index %lu failed\n", dense_index, self->dense.len - 1);
-        debug_printf("dense len: %lu\n", self->dense.len);
-        debug_printf("sset.h line %d\n", __LINE__);
         return err;
     }
     err = CONCAT(DenseToSparse, _swap)(&self->dense_to_sparse, (unsigned long)dense_index, self->dense.len - 1); 
     if(err != 0) {
-        debug_printf("Swapping dense_to_sparse indexes %ld and %lu failed\n", dense_index, self->dense.len - 1);
-        debug_printf("dense len: %lu\n", self->dense.len);
         return err;
     }
 
-    //reduce len of dense and dense_to_sparse
+    /*reduce len of dense and dense_to_sparse*/
     self->dense.len -= 1;
     self->dense_to_sparse.len -= 1;
 
 
-    //adjust the sparse index previously referring to the top element
+    /*adjust the sparse index previously referring to the top element*/
     self->sparse.items[self->dense_to_sparse.items[dense_index]] = dense_index;
 
-    //unset sparse array
+    /*unset sparse array*/
     self->sparse.items[index] = NULL_INDEX;
 
     return 0;
@@ -184,13 +177,13 @@ static int CONCAT(SSET_NAME, _delete)(SSET_NAME * self, const unsigned long inde
 #endif
 
 NODISCARD PURE_FUNCTION
-static SSET_TYPE * CONCAT(SSET_NAME, _get)(SSET_NAME * self, const unsigned long index) 
+SSET_TYPE * CONCAT(SSET_NAME, _get)(SSET_NAME * self, const unsigned long index) 
 #ifdef SSET_IMPLEMENTATION
 {
 
     long dense_index = NULL_INDEX;
 
-    //bounds checks
+    /*bounds checks*/
     if(index >= self->sparse.len) {
         return NULL;
     }
@@ -201,7 +194,7 @@ static SSET_TYPE * CONCAT(SSET_NAME, _get)(SSET_NAME * self, const unsigned long
     }
 
     if((unsigned long)dense_index >= self->dense.len) {
-        debug_printf("attempting to access dense_index %ld in array of length %lu\n", dense_index, self->dense.len);
+        return NULL;
     }
     return &self->dense.items[dense_index];
 }

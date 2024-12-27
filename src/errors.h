@@ -9,7 +9,7 @@
 #define ERR_ALLOCATION_FAILURE  1
 #define ERR_INDEX_OUT_OF_BOUNDS 2
 
-static inline char const * error_name(const int error_code) {
+static char const * error_name(const int error_code) {
     switch(error_code) {
         case ERR_NONE: 
             return "ERR_NONE";
@@ -25,4 +25,4 @@ static inline char const * error_name(const int error_code) {
 }
 
 
-#endif //ERRORS_H
+#endif /*ERRORS_H*/

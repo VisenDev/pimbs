@@ -1,7 +1,7 @@
 #ifndef CONCAT_H
 #define CONCAT_H
 
-// Indirection to force expansion
+/* Indirection to force expansion */
 #define CONCAT9(x, y) x##y
 #define CONCAT8(x, y) CONCAT9(x, y)
 #define CONCAT7(x, y) CONCAT8(x, y)
@@ -13,4 +13,4 @@
 #define CONCAT1(x, y) CONCAT2(x, y)
 #define CONCAT(x, y) CONCAT1(x, y)
 
-#endif //CONCAT_H
+#endif /*CONCAT_H*/

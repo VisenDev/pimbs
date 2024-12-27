@@ -22,7 +22,7 @@ typedef struct {
     TestingTracker active;
 } TestingState;
 
-//TODO remove string.h dependency
+/*TODO remove string.h dependency*/
 #include <string.h>
 
 static void testing_print_header(const char * str)
@@ -33,12 +33,13 @@ static void testing_print_header(const char * str)
     const unsigned int padding_needed = desired_width - len;
     const unsigned int pre_padding = padding_needed / 2;
     const unsigned int post_padding = padding_needed - pre_padding;
+    unsigned int i = 0;
 
-    for(unsigned int i = 0; i < pre_padding; ++i) {
+    for(i = 0; i < pre_padding; ++i) {
         tui_printf("=");
     }
-    tui_printf("%s", str);
-    for(unsigned int i = 0; i < post_padding; ++i) {
+    tui_printf1("%s", str);
+    for(i = 0; i < post_padding; ++i) {
         tui_printf("=");
     }
     tui_printf("\n");
@@ -51,8 +52,8 @@ static void testing_print_summary(const TestingTracker tracker)
 #ifdef TESTING_IMPLEMENTATION
 {
     testing_print_header(tracker.name);
-    tui_printf(TUI_GREEN"PASSED: %i\n",  tracker.passed);
-    tui_printf(TUI_RED"FAILED: %i\n", tracker.failed);
+    tui_printf1(TUI_GREEN"PASSED: %i\n",  tracker.passed);
+    tui_printf1(TUI_RED"FAILED: %i\n", tracker.failed);
     testing_print_header("");
 }
 #else
@@ -63,10 +64,14 @@ static void testing_print_summary(const TestingTracker tracker)
 static TestingState testing_init(void)
 #ifdef TESTING_IMPLEMENTATION
 {
-    return (TestingState) {
-        .overall = (TestingTracker){.name = "SUMMARY"},
-        .active = {0},
-    };
+    TestingTracker overall = {0};
+    TestingTracker active = {0};
+    TestingState result = {0};
+
+    overall.name = "SUMMARY";
+    result.overall = overall;
+    result.active = active;
+    return result;
 }
 #else
 ;
@@ -95,9 +100,12 @@ static void testing_start_test(TestingState * state, const char* test_name)
         state->overall.failed += state->active.failed;
     }
 
-    //update active
-    state->active = (TestingTracker){0};
-    state->active.name = test_name;
+    /*update active*/
+    {
+        const TestingTracker active = {0};
+        state->active = active;
+        state->active.name = test_name;
+    }
 }
 #else
 ;
@@ -108,13 +116,13 @@ static void testing_expect_internal(TestingState * state, const int condition, c
 #ifdef TESTING_IMPLEMENTATION
 {
     if(condition) {
-        tui_printf("testing.%s.%d... ", state->active.name, state->active.passed + state->active.failed); 
+        tui_printf2("testing.%s.%d... ", state->active.name, state->active.passed + state->active.failed); 
         tui_printf(TUI_GREEN"[PASSED]\n");
         state->active.passed += 1;
     } else {
-        tui_printf("./testing.%s.%d... ", state->active.name, state->active.passed + state->active.failed); 
+        tui_printf2("./testing.%s.%d... ", state->active.name, state->active.passed + state->active.failed); 
         tui_printf(TUI_RED"[FAILED]\n");
-        tui_printf(TUI_RED"   -> %s:%i\n", file , line); 
+        tui_printf2(TUI_RED"   -> %s:%i\n", file , line); 
         state->active.failed += 1;
     }
 }
@@ -122,4 +130,4 @@ static void testing_expect_internal(TestingState * state, const int condition, c
 ;
 #endif
 
-#endif //TESTING_H
+#endif /*TESTING_H*/

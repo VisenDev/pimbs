@@ -14,18 +14,22 @@
 #define TUI_CYAN    "\x1b[36m"
 #define TUI_RESET   "\x1b[0m"
 
-
-
 #ifndef LOG_FUNCTION
     PURE_FUNCTION
     static inline int dummy_log_function(const char * format, ...) {
         (void)format;
         return 0;
     }
-    #define LOG_FUNCTION(...) dummy_log_function(__VA_ARGS__)
+    #define LOG_FUNCTION dummy_log_function
 #endif /*LOG_FUNCTION*/
-       
-#define tui_printf(...) do {LOG_FUNCTION(__VA_ARGS__); LOG_FUNCTION(TUI_RESET); } while (0)
-#define debug_printf tui_printf
+
+
+/* C89 doesn't have variadic macros :( */
+#define tui_printf(fmt)                 do {LOG_FUNCTION(fmt);                LOG_FUNCTION(TUI_RESET);} while(0)
+#define tui_printf1(fmt, a)             do {LOG_FUNCTION(fmt, a);             LOG_FUNCTION(TUI_RESET);} while(0)
+#define tui_printf2(fmt, a, b)          do {LOG_FUNCTION(fmt, a, b);          LOG_FUNCTION(TUI_RESET);} while(0)
+#define tui_printf3(fmt, a, b, c)       do {LOG_FUNCTION(fmt, a, b, c);       LOG_FUNCTION(TUI_RESET);} while(0)
+#define tui_printf4(fmt, a, b, c, d)    do {LOG_FUNCTION(fmt, a, b, c, d);    LOG_FUNCTION(TUI_RESET);} while(0)
+#define tui_printf5(fmt, a, b, c, d, e) do {LOG_FUNCTION(fmt, a, b, c, d, e); LOG_FUNCTION(TUI_RESET);} while(0)
 
 #endif /*TUI_H*/

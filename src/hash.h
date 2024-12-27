@@ -5,20 +5,20 @@
     #include "allocator.h"
     #include "debug.h"
     #include "strutils.h"
-#endif //HASH_IMPLEMENTATION
+#endif /*HASH_IMPLEMENTATION*/
 
 #ifndef HASH_TYPE 
 #error "HASH_TYPE must be defined before including \"hash.h\""
-#endif //LIST TYPE
+#endif /*LIST TYPE*/
        
 #ifndef HASH_NAME
 #error "HASH_NAME must be defined before including \"hash.h\""
-#endif //LIST_NAME
+#endif /*LIST_NAME*/
 
-// Subtypes
+/* Subtypes*/
 #ifdef HASH_IMPLEMENTATION
     #define VEC_IMPLEMENTATION
-#endif //HASH_IMPLEMENTATION
+#endif /*HASH_IMPLEMENTATION*/
 #define Values CONCAT(HASH_NAME, _values)
 #define VEC_NAME Values
 #define VEC_TYPE HASH_TYPE
@@ -26,7 +26,7 @@
 
 #ifdef HASH_IMPLEMENTATION
     #define VEC_IMPLEMENTATION
-#endif //HASH_IMPLEMENTATION
+#endif /*HASH_IMPLEMENTATION*/
 #define Keys CONCAT(HASH_NAME, _keys)
 #define VEC_NAME Keys
 #define VEC_TYPE char *
@@ -34,7 +34,7 @@
 
 #ifdef HASH_IMPLEMENTATION
     #define LIST_IMPLEMENTATION
-#endif //HASH_IMPLEMENTATION
+#endif /*HASH_IMPLEMENTATION*/
 #define IndexRecord CONCAT(HASH_NAME, _index_records)
 #define LIST_NAME IndexRecord
 #define LIST_TYPE unsigned long
@@ -42,15 +42,11 @@
 
 #ifdef HASH_IMPLEMENTATION
     #define SSET_IMPLEMENTATION
-#endif //HASH_IMPLEMENTATION
-       
+#endif /*HASH_IMPLEMENTATION*/
 #define Indexes CONCAT(HASH_NAME, _indexes)
 #define SSET_NAME Indexes
 #define SSET_TYPE IndexRecord*
 #include "sset.h"
-
-//#undef VEC_IMPLEMENTATION
-//#undef SSET_IMPLEMENTATION
 
 typedef struct {
     unsigned long max_key_len;
@@ -64,13 +60,13 @@ NODISCARD PURE_FUNCTION
 static HASH_NAME CONCAT(HASH_NAME, _init)(void) 
 #ifdef HASH_IMPLEMENTATION
 {
-    return (HASH_NAME){
-        .max_key_len = 64,
-        .modulus = 1024,
-        .values = CONCAT(Values, _init)(),
-        .keys = CONCAT(Keys, _init)(),
-        .indexes = CONCAT(Indexes, _init)(),
-    };
+    HASH_NAME result = {0};
+    result.max_key_len = 64;
+    result.modulus = 1024;
+    result.values = CONCAT(Values, _init)();
+    result.keys = CONCAT(Keys, _init)();
+    result.indexes = CONCAT(Indexes, _init)();
+    return result;
 }
 #else
 ;
@@ -80,11 +76,12 @@ static HASH_NAME CONCAT(HASH_NAME, _init)(void)
 static void CONCAT(HASH_NAME, _free)(Allocator a, HASH_NAME * self) 
 #ifdef HASH_IMPLEMENTATION
 {
-    for(unsigned long i = 0; i < self->keys.len; ++i) {
+    unsigned long i = 0;
+    for(i = 0; i < self->keys.len; ++i) {
         a.free(a, self->keys.items[i]);
     }
 
-    for(unsigned long i = 0; i < self->indexes.dense.len; ++i) {
+    for(i = 0; i < self->indexes.dense.len; ++i) {
         CONCAT(IndexRecord, _free)(a, self->indexes.dense.items[i]);
     }
 
@@ -102,8 +99,9 @@ static unsigned long CONCAT(HASH_NAME, _hash)(HASH_NAME * const self, const char
 {
     /* Inspired by djbt2 by Dan Bernstein - http://www.cse.yorku.ca/~oz/hash.html */
     unsigned long hash = 5381;
+    unsigned long i = 0;
 
-    for(unsigned long i = 0; i < keylen; ++i) {
+    for(i = 0; i < keylen; ++i) {
         const unsigned char c = (unsigned char)key[i];
         simple_assert(c != 0, "provided keylen is incorrect");
         hash = ((hash << 5) + hash) + c; /* hash * 33 + c */
@@ -123,13 +121,14 @@ static HASH_TYPE * CONCAT(HASH_NAME, _get)(HASH_NAME * self, const char * key, u
     const unsigned long hash = CONCAT(HASH_NAME, _hash)(self, key, keylen);
     IndexRecord ** maybe_starting_node = CONCAT(Indexes, _get)(&self->indexes, hash);
     IndexRecord * starting_node = maybe_starting_node == NULL ? NULL : *maybe_starting_node; 
+    IndexRecord * node = starting_node;
     char * possible_matching_key = NULL;
     long values_array_index = -1;
 
-    for(IndexRecord * node = starting_node; node != NULL; node = node->next) {
+    for(node = starting_node; node != NULL; node = node->next) {
         debug_assert(unsigned_long, node->value, <, self->keys.len);
 
-        //extract the key associated with the node
+        /*extract the key associated with the node*/
         possible_matching_key = self->keys.items[node->value];
         if(string_equal(key, possible_matching_key, self->max_key_len)) {
             values_array_index = (long)node->value;
@@ -153,34 +152,14 @@ NODISCARD
 static int CONCAT(HASH_NAME, _put)(Allocator a, HASH_NAME * self, const char * key, unsigned long keylen, const HASH_TYPE value)
 #ifdef HASH_IMPLEMENTATION
 {
-    //create internal copy of key
-
-    //hash the key and get index_node 
-    //const unsigned long hash = CONCAT(HASH_NAME, _hash)(self, keycpy, keylen);
-    //const IndexRecord ** maybe_starting_node = CONCAT(Indexes, _get)(&self->indexes, hash);
-    //const IndexRecord * starting_node = maybe_starting_node == NULL ? NULL : *maybe_starting_node; 
-    ////const IndexRecord ** starting_node = index_node;
-    //long values_array_index = -1;
-
-    //for(IndexRecord * node = starting_node; node->next != NULL; node = node->next) {
-    //    debug_assert(unsigned_long, node.value, <, self->keys.len);
-
-    //    //extract the key associated with the node
-    //    const char * possible_matching_key = self->keys.items[node.value];
-    //    if(string_equal(key, possible_matching_key, self->max_key_len)) {
-    //        values_array_index = node.value;
-    //        break;
-    //    }
-    //}
-
     HASH_TYPE * found = CONCAT(HASH_NAME, _get)(self, key, keylen);
 
-    //create new values array entry if none is found
+    /*create new values array entry if none is found*/
     if(found == NULL) {
         int err = 0;
         char * keycpy = NULL;
 
-        //append new entry
+        /*append new entry*/
         err = CONCAT(Values, _append)(a, &self->values, value);
         if(err != ERR_NONE) {
             return ERR_ALLOCATION_FAILURE;
@@ -195,7 +174,7 @@ static int CONCAT(HASH_NAME, _put)(Allocator a, HASH_NAME * self, const char * k
             return ERR_ALLOCATION_FAILURE;
         }
 
-        //create new node
+        /*create new node*/
         {
             const unsigned long hash = CONCAT(HASH_NAME, _hash)(self, keycpy, keylen);
             IndexRecord ** old_node_location = CONCAT(Indexes, _get)(&self->indexes, hash);
@@ -210,12 +189,9 @@ static int CONCAT(HASH_NAME, _put)(Allocator a, HASH_NAME * self, const char * k
             }
         }
 
-    //a corresponding key has been found, so update its associated value
+    /*a corresponding key has been found, so update its associated value*/
     } else {
         *found = value;
-        //debug_assert(long, values_array_index, >=, 0);
-        //debug_assert(unsigned_long, (unsigned long)values_array_index, <, self->values.len);
-        //self->values.items[values_array_index] = value;
     }
      
     return ERR_NONE;

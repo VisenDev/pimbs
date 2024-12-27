@@ -37,9 +37,9 @@
 #define debug_assert(type, lhs, operator, rhs) \
     do { \
         if(LIKELY_FALSE(!((lhs) operator (rhs)))) { \
-            tui_printf(TUI_RED   "\nASSERTION FAILURE: %s %s %s\n", #lhs, #operator, #rhs); \
-            tui_printf(TUI_YELLOW"   lhs expression %s expands to " type ## _specifier "\n", #lhs, lhs); \
-            tui_printf(TUI_YELLOW"   rhs expression %s expands to " type ## _specifier "\n", #rhs, rhs); \
+            tui_printf3(TUI_RED   "\nASSERTION FAILURE: %s %s %s\n", #lhs, #operator, #rhs); \
+            tui_printf2(TUI_YELLOW"   lhs expression %s expands to " type ## _specifier "\n", #lhs, lhs); \
+            tui_printf2(TUI_YELLOW"   rhs expression %s expands to " type ## _specifier "\n", #rhs, rhs); \
             log_location(); \
             tui_printf(TUI_RED   "   ABORTING...\n\n"); \
             ABORT(); \
@@ -50,8 +50,8 @@
     do { \
         const int condition = expression; \
         if(LIKELY_FALSE(!condition)) { \
-            tui_printf(TUI_RED   "\nASSERTION FAILURE: %s\n", #expression); \
-            tui_printf(TUI_YELLOW"   %s\n", message); \
+            tui_printf1(TUI_RED   "\nASSERTION FAILURE: %s\n", #expression); \
+            tui_printf1(TUI_YELLOW"   %s\n", message); \
             log_location(); \
             tui_printf(TUI_RED   "   ABORTING...\n\n"); \
             ABORT(); \

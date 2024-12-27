@@ -4,16 +4,16 @@
 
 #ifdef VEC_IMPLEMENTATION
     #include "errors.h"
-#endif //VEC_IMPLEMENTATION
+#endif /*VEC_IMPLEMENTATION*/
 
 /**************CHECK TYPE AND NAME*************/
 #ifndef VEC_TYPE 
     #error "VEC_TYPE must be defined before including <vector.h>"
-#endif //VECTOR_TYPE
+#endif /*VECTOR_TYPE*/
        
 #ifndef VEC_NAME
     #error "VEC_NAME must be defined before including <vector.h>"
-#endif //VECTOR_TYPE
+#endif /*VECTOR_TYPE*/
        
 
 /**************IMPLEMENTATION*****************/
@@ -24,21 +24,22 @@ typedef struct VEC_NAME {
 } VEC_NAME;
 
 NODISCARD PURE_FUNCTION
-static VEC_NAME CONCAT(VEC_NAME, _init) (void)
+VEC_NAME CONCAT(VEC_NAME, _init) (void)
 #ifdef VEC_IMPLEMENTATION
 {
-    return (VEC_NAME) {
-        .items = NULL,
-        .len = 0,
-        .cap = 0,
+    VEC_NAME result =  {
+        NULL,
+        0,
+        0,
     };
+    return result;
 }
 #else 
 ;
 #endif
 
 
-static void CONCAT(VEC_NAME, _free) (Allocator a, VEC_NAME * self) 
+void CONCAT(VEC_NAME, _free) (Allocator a, VEC_NAME * self) 
 #ifdef VEC_IMPLEMENTATION
 {
     if(self->items != NULL) {
@@ -53,7 +54,7 @@ static void CONCAT(VEC_NAME, _free) (Allocator a, VEC_NAME * self)
 #endif
 
 NODISCARD
-static int CONCAT(VEC_NAME, _ensure_capacity) (Allocator a, VEC_NAME * self, unsigned long capacity)
+int CONCAT(VEC_NAME, _ensure_capacity) (Allocator a, VEC_NAME * self, unsigned long capacity)
 #ifdef VEC_IMPLEMENTATION
 {
     if(self->items == NULL) {
@@ -82,9 +83,10 @@ static int CONCAT(VEC_NAME, _ensure_capacity) (Allocator a, VEC_NAME * self, uns
 #endif
 
 NODISCARD
-static int CONCAT(VEC_NAME, _append) (Allocator a, VEC_NAME * self, VEC_TYPE value)
+int CONCAT(VEC_NAME, _append) (Allocator a, VEC_NAME * self, VEC_TYPE value)
 #ifdef VEC_IMPLEMENTATION
 {
+    simple_assert(self != NULL, "self is NULL");
     if(self->len >= self->cap) {
         const int err = CONCAT(VEC_NAME, _ensure_capacity)(a, self, (1 + self->cap) * 2);
         if(err != ERR_NONE) {
@@ -93,9 +95,13 @@ static int CONCAT(VEC_NAME, _append) (Allocator a, VEC_NAME * self, VEC_TYPE val
             return CONCAT(VEC_NAME, _append)(a, self, value);
         }
     } else {
-        const unsigned long index = self->len;
-        self->items[index] = value;
+        unsigned long index = 0;
+        simple_assert(self->items != NULL, "self.items is not NULL");
+
         self->len += 1;
+        index = self->len - 1;
+        simple_assert(index < self->cap, "index is valid");
+        self->items[index] = value;
         return ERR_NONE;
     }
 }
@@ -104,10 +110,11 @@ static int CONCAT(VEC_NAME, _append) (Allocator a, VEC_NAME * self, VEC_TYPE val
 #endif
 
 NODISCARD
-static int CONCAT(VEC_NAME, _append_n_times) (Allocator a, VEC_NAME * self, unsigned long times, VEC_TYPE value) 
+int CONCAT(VEC_NAME, _append_n_times) (Allocator a, VEC_NAME * self, unsigned long times, VEC_TYPE value) 
 #ifdef VEC_IMPLEMENTATION
 {
-    for(unsigned long i = 0; i < times; ++i){
+    unsigned long i = 0;
+    for(i = 0; i < times; ++i){
         const int err = CONCAT(VEC_NAME, _append)(a, self, value);
         if(err != ERR_NONE) {
             return err;
@@ -121,17 +128,17 @@ static int CONCAT(VEC_NAME, _append_n_times) (Allocator a, VEC_NAME * self, unsi
 
 
 NODISCARD
-static int CONCAT(VEC_NAME, _swap) (VEC_NAME * self, unsigned long lhs, unsigned long rhs) 
+int CONCAT(VEC_NAME, _swap) (VEC_NAME * self, unsigned long lhs, unsigned long rhs) 
 #ifdef VEC_IMPLEMENTATION
 {
     VEC_TYPE tmp;
 
-    //Bounds check
+    /*Bounds check*/
     if(lhs >= self->len || rhs >= self->len) {
         return ERR_INDEX_OUT_OF_BOUNDS;
     }
 
-    //Do nothing if lhs and rhs are the same index
+    /*Do nothing if lhs and rhs are the same index*/
     if(lhs == rhs) {
         return ERR_NONE;
     }

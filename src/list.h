@@ -1,12 +1,4 @@
 /***************CHECK DEPENDENCIES*************/
-//#ifndef CONCAT_H
-//    #error "\"concat.h\" must be included before \"list.h\""
-//#endif //CONCAT_H
-//
-//
-//#ifndef ALLOCATOR_H
-//    #error "\"allocator.h\" must be included before \"list.h\""
-//#endif //ALLOCATOR_H
 #include "concat.h"
 #include "attributes.h"
 
@@ -17,25 +9,20 @@
 /**************NAME AND TYPE*******************/
 #ifndef LIST_TYPE 
     #error "LIST_TYPE must be defined before including \"list.h\""
-#endif //LIST TYPE
+#endif /*LIST TYPE*/
        
 #ifndef LIST_NAME
     #error "LIST_NAME must be defined before including \"list.h\""
-#endif //LIST_NAME
+#endif /*LIST_NAME*/
        
 
 /*****************IMPLEMENTATION**************/
 struct LIST_NAME;
 
-#ifdef __clang__
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wpadded"
-#endif //__clang__
 typedef struct LIST_NAME {
     struct LIST_NAME * next;
     LIST_TYPE value;
 } LIST_NAME;
-#pragma clang diagnostic pop
 
 NODISCARD 
 static LIST_NAME * CONCAT(LIST_NAME, _cons)(Allocator a, LIST_TYPE value, struct LIST_NAME * next)
