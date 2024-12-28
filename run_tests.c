@@ -39,7 +39,8 @@
 int main(void) {
     TestingState t = testing_init();
 
-    #define buflen 0xFFFFFF
+    
+    #define buflen 0xFFFFFFF
     static char buf[buflen];
     Allocator fixed = fixed_buffer_allocator(buf, buflen);
     /*Allocator libc = libc_allocator();*/
@@ -56,7 +57,27 @@ int main(void) {
         leak_check_allocator_free(a);
     }
 
-    test_memory_copy(&t);
+
+    testing_start_test(&t, "memory_copy");
+    {
+        unsigned int i = 0;
+        unsigned int errors = 0;
+        char dest[10000];
+        char src[10000];
+
+        for(i = 0; i < 10000; ++i) {
+            char ch = (char)(i%255);
+            src[i] = ch;
+        }
+        memory_copy(&dest, &src, 10000);
+        for(i = 0; i < 10000; ++i) {
+            if(dest[i] != src[i]) {
+                errors += 1;
+            }
+        }
+
+        testing_expect(&t, errors == 0);
+    }
 
     testing_start_test(&t, "vec");
     {
@@ -68,9 +89,7 @@ int main(void) {
             simple_assert(err == ERR_NONE, error_name(err));
         }
         for(i = 0; i < 10000; ++i){
-            if(i % 1000 == 0) {
-                testing_expect(&t, v.items[i] == i);
-            }
+            testing_expect(&t, v.items[i] == i);
         }
         vec_free(a, &v);
     }
@@ -94,9 +113,7 @@ int main(void) {
         }
         start = node;
         for(i = 9999; i >= 0; --i){
-            if(i % 1000 == 0) {
-                testing_expect(&t, node->value == i);
-            }
+            testing_expect(&t, node->value == i);
             node = node->next;
         }
 
@@ -123,9 +140,7 @@ int main(void) {
 
         testing_start_test(&t, "sset.get");
         for(i = 0; i < 10000; i += 1){
-            if(i % 1000 == 0) {
-                testing_expect(&t, *sset_get(&s, i * 2) == (int)(i / 10));
-            }
+            testing_expect(&t, *sset_get(&s, i * 2) == (int)(i / 10));
         }
 
         /*unset*/
@@ -137,12 +152,25 @@ int main(void) {
             }
         }
 
-        testing_start_test(&t, "sset.test_deleted");
         for(i = 0; i < 10000; i += 1){
             if(i % 333 == 0) {
                 testing_expect(&t, sset_get(&s, i * 2) == NULL);
             } else if(i % 1000 == 0) {
                 testing_expect(&t, *sset_get(&s, i * 2) == (int)(i / 10));
+            }
+        }
+
+
+        testing_start_test(&t, "sset.get_or_set");
+        for(i = 30000; i < 40000; i += 1){
+            const int * value = sset_get_or_set(a, &s, i, (int)i);
+            testing_expect(&t, SAFE_DEREF(value) == (int)i);
+        }
+
+        testing_start_test(&t, "sset.get_or_set_no_mangle");
+        for(i = 30000; i < 40000; i += 1){
+            if(i % 1000 == 0) {
+                testing_expect(&t, *sset_get(&s, i) == (int)i);
             }
         }
 
@@ -160,18 +188,18 @@ int main(void) {
         int err = 0;
         hashmap h = hashmap_init();
 
-        err = hashmap_put(a, &h, "asdf", 4, 1);
+        err = hashmap_put(a, &h, "asdf", 1);
         simple_assert(err == ERR_NONE, error_name(err));
 
-        err = hashmap_put(a, &h, "ASDF", 4, 2);
+        err = hashmap_put(a, &h, "ASDF", 2);
         simple_assert(err == ERR_NONE, error_name(err));
 
-        err = hashmap_put(a, &h, "IDGAF", 5, 3);
+        err = hashmap_put(a, &h, "IDGAF", 3);
         simple_assert(err == ERR_NONE, error_name(err));
 
-        testing_expect(&t, *hashmap_get(&h, "asdf", 4) == 1);
-        testing_expect(&t, *hashmap_get(&h, "ASDF", 4) == 2);
-        testing_expect(&t, *hashmap_get(&h, "IDGAF", 5) == 3);
+        testing_expect(&t, *hashmap_get(&h, "asdf") == 1);
+        testing_expect(&t, *hashmap_get(&h, "ASDF") == 2);
+        testing_expect(&t, *hashmap_get(&h, "IDGAF") == 3);
         hashmap_free(a, &h);
     }
 

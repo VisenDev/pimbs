@@ -12,7 +12,11 @@
 #include "tui.h"
 #include "strutils.h"       
 #include "testing.h"
-       
+
+/* utility macros for dealing with null */
+#define DEREF_OR_NULL(ptr) ptr == NULL ? NULL : *ptr
+#define SAFE_DEREF(ptr) (inline_assert(ptr != NULL), *ptr)
+
 struct Allocator;
 
 typedef void* (*AllocFn)(struct Allocator,unsigned long);
@@ -342,49 +346,6 @@ Allocator always_failing_allocator(void)
 ;
 #endif
 
-
-
-/* memcpy */
-static void memory_copy(void * dest, const void * const src, const unsigned long byte_count)
-#ifdef ALLOCATOR_IMPLEMENTATION
-{
-    char * destbuf = dest;
-    const char * const srcbuf = src;
-    unsigned long i = 0;
-    for(i = 0; i < byte_count; ++i) {
-        destbuf[i] = srcbuf[i];
-    }
-}
-#else
-;
-#endif
-
-static void test_memory_copy(TestingState * t)
-#ifdef ALLOCATOR_IMPLEMENTATION
-{
-    unsigned int i = 0;
-    unsigned int errors = 0;
-    char dest[10000];
-    char src[10000];
-
-    testing_start_test(t, "memory_copy");
-
-    for(i = 0; i < 10000; ++i) {
-        char ch = (char)(i%255);
-        src[i] = ch;
-    }
-    memory_copy(&dest, &src, 10000);
-    for(i = 0; i < 10000; ++i) {
-        if(dest[i] != src[i]) {
-            errors += 1;
-        }
-    }
-
-    testing_expect(t, errors == 0);
-}
-#else
-;
-#endif
 
 
 /* Fixed Buffer */

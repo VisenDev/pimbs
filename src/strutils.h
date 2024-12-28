@@ -9,7 +9,7 @@ typedef struct {
 } String;
 
 NODISCARD PURE_FUNCTION
-static int string_equal( const char * lhs, const char * rhs, unsigned long maxlen )
+static int string_equal( const char * const lhs, const char * const  rhs, unsigned long maxlen )
 {
     unsigned long i = 0;
     for(i = 0; i < maxlen; ++i) {
@@ -36,5 +36,46 @@ static unsigned long string_length(const char * const str, const unsigned long m
     return i;
 }
 
+
+/* memcpy */
+static void memory_copy(void * dest, const void * const src, const unsigned long byte_count)
+{
+    char * destbuf = dest;
+    const char * const srcbuf = src;
+    unsigned long i = 0;
+    for(i = 0; i < byte_count; ++i) {
+        destbuf[i] = srcbuf[i];
+    }
+}
+
+
+/* Fixed length string */
+#ifndef FIXED_STRING_LEN
+    #define FIXED_STRING_LEN 64
+#endif
+
+typedef struct {
+    char str[FIXED_STRING_LEN];
+    unsigned long len;
+} FixedString;
+
+NODISCARD PURE_FUNCTION
+static unsigned long string_length_fixed(const char * const str) {
+    return string_length(str, FIXED_STRING_LEN - 1);
+}
+
+NODISCARD PURE_FUNCTION
+static int string_equal_fixed(const FixedString lhs, const char * const rhs) {
+    return string_equal(lhs.str, rhs, lhs.len);
+}
+
+NODISCARD PURE_FUNCTION
+static FixedString fixed_string_init(const char * const str) {
+    const unsigned long len = string_length_fixed(str);
+    FixedString result = {0};
+    result.len = len;
+    memory_copy(&result.str, str, len);
+    return result;
+}
 
 #endif /*STRUTILS.H*/

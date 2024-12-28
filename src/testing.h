@@ -20,14 +20,22 @@ typedef struct {
     TestingTracker active;
 } TestingState;
 
+static unsigned int padding_needed(const char * const str, const unsigned int desired_width)
+#ifdef TESTING_IMPLEMENTATION
+{
+    const unsigned int len = (unsigned int)string_length(str, 40);
+    return desired_width - len;
+}
+#else
+;
+#endif
+
 static void testing_print_header(const char * str)
 #ifdef TESTING_IMPLEMENTATION
 {
-    const unsigned int desired_width = 40;
-    const unsigned int len = (unsigned int)string_length(str, 40);
-    const unsigned int padding_needed = desired_width - len;
-    const unsigned int pre_padding = padding_needed / 2;
-    const unsigned int post_padding = padding_needed - pre_padding;
+    const unsigned int padding = padding_needed(str, 40);
+    const unsigned int pre_padding = padding / 2;
+    const unsigned int post_padding = padding - pre_padding;
     unsigned int i = 0;
 
     for(i = 0; i < pre_padding; ++i) {
@@ -72,14 +80,29 @@ static TestingState testing_init(void)
 ;
 #endif
 
+static void testing_update_overall(TestingState * state)
+#ifdef TESTING_IMPLEMENTATION
+{
+
+    if(state->active.name != NULL) {
+        if(state->active.failed != 0) {
+            tui_printf(TUI_YELLOW"[completed]\n"); 
+        } else {
+            tui_printf(TUI_GREEN"[completed]\n"); 
+        }
+        state->overall.passed += state->active.passed;
+        state->overall.failed += state->active.failed;
+    }
+}
+#else
+;
+#endif
 
 static void testing_deinit(TestingState * state)
 #ifdef TESTING_IMPLEMENTATION
 {
-    if(state->active.name != NULL) {
-        state->overall.passed += state->active.passed;
-        state->overall.failed += state->active.failed;
-    }
+
+    testing_update_overall(state);
     testing_print_summary(state->overall);
 }
 #else
@@ -90,16 +113,22 @@ static void testing_deinit(TestingState * state)
 static void testing_start_test(TestingState * state, const char* test_name)
 #ifdef TESTING_IMPLEMENTATION
 {
-    if(state->active.name != NULL) {
-        state->overall.passed += state->active.passed;
-        state->overall.failed += state->active.failed;
-    }
+    testing_update_overall(state);
 
     /*update active*/
     {
         const TestingTracker active = {0};
         state->active = active;
         state->active.name = test_name;
+    }
+
+    /*print padding*/
+    {
+        const int characters = LOG_FUNCTION("testing.%s...", state->active.name); 
+        int i = 0;
+        for(i = 0; i < 40 - characters; ++i) {
+            tui_printf(" ");
+        }
     }
 }
 #else
@@ -111,8 +140,6 @@ static void testing_expect_internal(TestingState * state, const int condition, c
 #ifdef TESTING_IMPLEMENTATION
 {
     if(condition) {
-        tui_printf2("testing.%s.%d... ", state->active.name, state->active.passed + state->active.failed); 
-        tui_printf(TUI_GREEN"[PASSED]\n");
         state->active.passed += 1;
     } else {
         tui_printf2("./testing.%s.%d... ", state->active.name, state->active.passed + state->active.failed); 

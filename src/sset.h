@@ -91,6 +91,31 @@ int CONCAT(SSET_NAME, _expand_sparse) (Allocator a, SSET_NAME * self, unsigned l
 
 
 NODISCARD 
+SSET_TYPE * CONCAT(SSET_NAME, _get)(SSET_NAME * self, const unsigned long index) 
+#ifdef SSET_IMPLEMENTATION
+{
+
+    long dense_index = NULL_INDEX;
+
+    /*bounds checks*/
+    if(index >= self->sparse.len) {
+        return NULL;
+    }
+
+    dense_index = self->sparse.items[index];
+    if(dense_index == NULL_INDEX) {
+        return NULL;
+    }
+
+    simple_assert((unsigned long)dense_index < self->dense.len, "Stored dense index is invalid");
+    return &self->dense.items[dense_index];
+}
+#else
+;
+#endif
+
+
+NODISCARD 
 int CONCAT(SSET_NAME, _put)(Allocator a, SSET_NAME * self, unsigned long index, SSET_TYPE value) 
 #ifdef SSET_IMPLEMENTATION
 {
@@ -98,13 +123,17 @@ int CONCAT(SSET_NAME, _put)(Allocator a, SSET_NAME * self, unsigned long index, 
     int err = 0;
     long dense_index = NULL_INDEX;
 
+    /*bounds check*/
     if(index >= self->sparse.len) {
         err = CONCAT(SSET_NAME, _expand_sparse)(a, self, index + 1);
-        if (err != 0) {
+        if (err != ERR_NONE) {
+            log_location();
+            tui_printf2("Putting sparse set index %lu failed because %s\n", index, error_name(err));
             return err;
         }
     }
 
+    /*assert bounds check*/
     debug_assert(unsigned_long, index, <, self->sparse.len);
 
     dense_index = self->sparse.items[index];
@@ -112,20 +141,27 @@ int CONCAT(SSET_NAME, _put)(Allocator a, SSET_NAME * self, unsigned long index, 
     if(dense_index == NULL_INDEX) {
         /*append new*/
         err = CONCAT(Dense, _append)(a, &self->dense, value);
-        if(err != 0) {
+        if(err != ERR_NONE) {
+            log_location();
+            tui_printf2("Putting sparse set index %lu failed because %s\n", index, error_name(err));
             return err;
         }
         err = CONCAT(DenseToSparse, _append)(a, &self->dense_to_sparse, index);
-        if(err != 0) {
+        if(err != ERR_NONE) {
+            log_location();
+            tui_printf2("Putting sparse set index %lu failed because %s\n", index, error_name(err));
             return err;
         }
+        /*update sparse*/
         self->sparse.items[index] = (long)self->dense.len - 1;
     } else {
         /*replace existing*/
+        tui_printf2("sset put replacing existing value at dense index %ld and normal index %lu\n", dense_index, index);
         self->dense.items[dense_index] = value;
     }
 
-    return 0;
+    simple_assert(CONCAT(SSET_NAME, _get)(self, index) != NULL, "index that was just put should not be null");
+    return ERR_NONE;
 }
 #else 
 ;
@@ -135,18 +171,18 @@ NODISCARD
 int CONCAT(SSET_NAME, _delete)(SSET_NAME * self, const unsigned long index) 
 #ifdef SSET_IMPLEMENTATION
 {
-    int err = 0;
+    int err = ERR_NONE;
     long dense_index = NULL_INDEX;
 
 
     /*bounds checks*/
     if(index >= self->sparse.len) {
-        return 1;
+        return ERR_INDEX_OUT_OF_BOUNDS;
     }
 
     dense_index = self->sparse.items[index];
     if(dense_index == NULL_INDEX) {
-        return 1;
+        return ERR_NOT_FOUND;
     }
 
     /*Swap top and index*/
@@ -170,38 +206,36 @@ int CONCAT(SSET_NAME, _delete)(SSET_NAME * self, const unsigned long index)
     /*unset sparse array*/
     self->sparse.items[index] = NULL_INDEX;
 
-    return 0;
+    return ERR_NONE;
 }
 #else
 ;
 #endif
 
-NODISCARD PURE_FUNCTION
-SSET_TYPE * CONCAT(SSET_NAME, _get)(SSET_NAME * self, const unsigned long index) 
+
+/*TODO rename to _get_or_put*/
+NODISCARD 
+SSET_TYPE * CONCAT(SSET_NAME, _get_or_set)(Allocator a, SSET_NAME * self, const unsigned long index, SSET_TYPE fallback_value)
 #ifdef SSET_IMPLEMENTATION
 {
-
-    long dense_index = NULL_INDEX;
-
-    /*bounds checks*/
-    if(index >= self->sparse.len) {
-        return NULL;
+    SSET_TYPE * found = CONCAT(SSET_NAME, _get)(self, index);
+    if(found == NULL) {
+        int err = CONCAT(SSET_NAME, _put)(a, self, index, fallback_value);
+        if(err != ERR_NONE) {
+            log_location();
+            tui_printf2("get or set sparse set index %lu failed because %s\n", index, error_name(err));
+            return NULL;
+        } 
+        found = CONCAT(SSET_NAME, _get)(self, index);
+        simple_assert(found != NULL, "found should not be null once it has been set");
+        return found;
+    } else {
+        return found;
     }
-
-    dense_index = self->sparse.items[index];
-    if(dense_index == NULL_INDEX) {
-        return NULL;
-    }
-
-    if((unsigned long)dense_index >= self->dense.len) {
-        return NULL;
-    }
-    return &self->dense.items[dense_index];
 }
 #else
 ;
 #endif
-
 
 
 
