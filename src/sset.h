@@ -1,9 +1,9 @@
 
 #include "attributes.h"
 #include "concat.h"
+#include "allocator.h"
 
 #ifdef SSET_IMPLEMENTATION
-    #include "allocator.h"
     #include "tui.h"
     #include "debug.h"
 #endif

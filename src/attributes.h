@@ -19,11 +19,11 @@
     #define LIKELY_TRUE(expr) expr
     #define LIKELY_FALSE(expr) expr
     #define PURE_FUNCTION
-    #ifdef NO_CSTDLIB
+    #if (defined(USE_STDLIB) && USE_STDLIB == 1)
         #define ABORT() (*(volatile int *)0) = 0
     #else 
         #define ABORT() abort()
-    #endif /*NO_CSTDLIB*/
+    #endif /*USE_STDLIB*/
 #endif /*GCC or Clang*/
 
 

@@ -1,9 +1,7 @@
 #ifndef ERRORS_H
 #define ERRORS_H
 
-#ifndef DEBUG_H
-#error "\"debug.h\" must be included before \"errors.h\""
-#endif
+#include "debug.h"
 
 #define ERR_NONE                0
 #define ERR_ALLOCATION_FAILURE  1

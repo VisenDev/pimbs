@@ -1,6 +1,5 @@
 #if !defined(ALLOCATOR_H) /* || (defined(ALLOCATOR_IMPLEMENTATION) && !defined(ALLOCATOR_IMPLEMENTED))*/
 
-
 #define ALLOCATOR_H
 
 #ifdef ALLOCATOR_IMPLEMENTATION

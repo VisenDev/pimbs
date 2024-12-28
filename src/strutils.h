@@ -8,7 +8,7 @@ typedef struct {
     unsigned long len;
 } String;
 
-NODISCARD PURE_FUNCTION
+NODISCARD 
 static int string_equal( const char * const lhs, const char * const  rhs, unsigned long maxlen )
 {
     unsigned long i = 0;
@@ -28,7 +28,7 @@ static int string_equal( const char * const lhs, const char * const  rhs, unsign
     return 1;
 }
 
-NODISCARD PURE_FUNCTION
+NODISCARD 
 static unsigned long string_length(const char * const str, const unsigned long maxlen)
 {
     unsigned long i = 0;
@@ -59,17 +59,17 @@ typedef struct {
     unsigned long len;
 } FixedString;
 
-NODISCARD PURE_FUNCTION
+NODISCARD 
 static unsigned long string_length_fixed(const char * const str) {
     return string_length(str, FIXED_STRING_LEN - 1);
 }
 
-NODISCARD PURE_FUNCTION
+NODISCARD 
 static int string_equal_fixed(const FixedString lhs, const char * const rhs) {
     return string_equal(lhs.str, rhs, lhs.len);
 }
 
-NODISCARD PURE_FUNCTION
+NODISCARD 
 static FixedString fixed_string_init(const char * const str) {
     const unsigned long len = string_length_fixed(str);
     FixedString result = {0};

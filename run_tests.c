@@ -155,7 +155,7 @@ int main(void) {
         for(i = 0; i < 10000; i += 1){
             if(i % 333 == 0) {
                 testing_expect(&t, sset_get(&s, i * 2) == NULL);
-            } else if(i % 1000 == 0) {
+            } else {
                 testing_expect(&t, *sset_get(&s, i * 2) == (int)(i / 10));
             }
         }
@@ -169,9 +169,7 @@ int main(void) {
 
         testing_start_test(&t, "sset.get_or_set_no_mangle");
         for(i = 30000; i < 40000; i += 1){
-            if(i % 1000 == 0) {
-                testing_expect(&t, *sset_get(&s, i) == (int)i);
-            }
+            testing_expect(&t, *sset_get(&s, i) == (int)i);
         }
 
         sset_free(a, &s);

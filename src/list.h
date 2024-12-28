@@ -1,10 +1,7 @@
 /***************CHECK DEPENDENCIES*************/
 #include "concat.h"
 #include "attributes.h"
-
-#ifdef LIST_IMPLEMENTATION
-    #include "allocator.h"
-#endif
+#include "allocator.h"
 
 /**************NAME AND TYPE*******************/
 #ifndef LIST_TYPE 
