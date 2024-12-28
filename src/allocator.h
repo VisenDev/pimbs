@@ -30,7 +30,7 @@ typedef struct Allocator {
 
 
 
-#ifdef USE_CSTDLIB
+#if defined(USE_STDLIB) && USE_STDLIB == 1
 
 #include "stdlib.h"
 

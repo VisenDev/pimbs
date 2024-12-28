@@ -9,7 +9,5 @@
 -Wno-missing-prototypes
 -Wno-unsafe-buffer-usage
 -Wno-padded
--nostdlib
--lSystem
-#-fsanitize=address
-#-fsanitize=undefined
+-fsanitize=address
+-fsanitize=undefined

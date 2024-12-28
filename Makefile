@@ -6,16 +6,26 @@ BUILDDIR=build
 TESTFILE=run_tests.c
 TESTEXE=$(BUILDDIR)/test
 
-$(TESTEXE): $(TESTFILE) $(SRCDIR)/*h $(CFLAGSFILE)
-	mkdir -p $(BUILDDIR)
-	$(CC) $(TESTFILE) $(OBJFILES) $(CFLAGS) $(DEPENDENCIES) -o $(TESTEXE)
+
+all: $(TESTFILE) $(SRCDIR)/*h $(CFLAGSFILE) builddir
+	$(CC) -DUSE_STDLIB=1 $(TESTFILE) $(CFLAGS) -o $(TESTEXE)
+
+$(TESTEXE):
+	@echo "Please build $(TESTEXE) using either 'make all' or 'make nostdlib'."
+	@exit 1
+
+builddir:
+	@mkdir -p $(BUILDDIR)
+
+nostdlib: $(TESTFILE) $(SRCDIR)/*h $(CFLAGSFILE) builddir
+	$(CC) -DUSE_STDLIB=0 $(TESTFILE) $(CFLAGS) -nostdlib -lSystem -fno-sanitize=address -fno-sanitize=undefined -o $(TESTEXE) 
 
 # Rule to build and run tests
 .PHONY: test
-test: $(TESTEXE) 
+test: $(TESTEXE)
 	./$(TESTEXE)
 
 # Clean rule
 .PHONY: clean
-clean:
+clean: 
 	trash $(BUILDDIR)

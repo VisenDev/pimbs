@@ -15,12 +15,17 @@
 #define TUI_RESET   "\x1b[0m"
 
 #ifndef LOG_FUNCTION
-    PURE_FUNCTION
-    static int dummy_log_function(const char * format, ...) {
-        (void)format;
-        return 0;
-    }
-    #define LOG_FUNCTION dummy_log_function
+    #if defined(USE_STDLIB) && USE_STDLIB == 1
+        #include <stdio.h>
+        #define LOG_FUNCTION printf
+    #else
+        PURE_FUNCTION
+        static int dummy_log_function(const char * format, ...) {
+            (void)format;
+            return 0;
+        }
+        #define LOG_FUNCTION dummy_log_function
+    #endif /*USE_STDLIB*/
 #endif /*LOG_FUNCTION*/
 
 
