@@ -10,9 +10,7 @@ TESTEXE=$(BUILDDIR)/test
 all: $(TESTFILE) $(SRCDIR)/*h $(CFLAGSFILE) builddir
 	$(CC) -DUSE_STDLIB=1 $(TESTFILE) $(CFLAGS) -o $(TESTEXE)
 
-$(TESTEXE):
-	@echo "Please build $(TESTEXE) using either 'make all' or 'make nostdlib'."
-	@exit 1
+$(TESTEXE): all
 
 builddir:
 	@mkdir -p $(BUILDDIR)

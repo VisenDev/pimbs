@@ -19,7 +19,6 @@
         #include <stdio.h>
         #define LOG_FUNCTION printf
     #else
-        PURE_FUNCTION
         static int dummy_log_function(const char * format, ...) {
             (void)format;
             return 0;

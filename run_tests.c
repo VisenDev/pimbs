@@ -33,6 +33,8 @@
 #define HASH_TYPE long
 #include "src/hash.h"
 
+#include "src/defer.h"
+
 
 int main(void) {
     TestingState t = testing_init();
@@ -44,18 +46,17 @@ int main(void) {
     /*Allocator logging = logging_allocator(&fixed);*/
     Allocator a = leak_check_allocator(&fixed);
 
-    test_memory_copy(&t);
-
-    if(0) {
-        cleanup:
+    defer(cleanup)
+    {
 
         if(leak_check_count_leaks(a) != 0) {
             tui_printf1("leak count: %d\n", leak_check_count_leaks(a));
         }
         testing_deinit(&t);
         leak_check_allocator_free(a);
-        return 0;
     }
+
+    test_memory_copy(&t);
 
     testing_start_test(&t, "vec");
     {
@@ -175,5 +176,6 @@ int main(void) {
     }
 
 
-    goto cleanup;
+    deferred(cleanup);
+    return 0;
 }

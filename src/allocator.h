@@ -28,8 +28,6 @@ typedef struct Allocator {
 
 
 
-
-
 #if defined(USE_STDLIB) && USE_STDLIB == 1
 
 #include "stdlib.h"
@@ -246,7 +244,7 @@ static void leak_check_free (struct Allocator self, void * mem)
 ;
 #endif
 
-NODISCARD PURE_FUNCTION
+NODISCARD 
 static int leak_check_count_leaks(struct Allocator self)
 #ifdef ALLOCATOR_IMPLEMENTATION
 {
@@ -397,6 +395,23 @@ typedef struct {
 } FixedBufferCtx;
 
 
+NODISCARD PURE_FUNCTION
+static int is_mem_top(FixedBufferCtx ctx, void * mem)
+#ifdef ALLOCATOR_IMPLEMENTATION
+{
+    char * mem_buf = mem;
+    const unsigned long byte_count = *(((unsigned long *) mem) - 1);
+
+    /*check if old_mem is at the top*/
+    return (ctx.buf + ctx.i == mem_buf + byte_count);
+}
+#else
+;
+#endif
+
+
+
+
 NODISCARD 
 static void* fixed_buffer_alloc (struct Allocator self, unsigned long byte_count)
 #ifdef ALLOCATOR_IMPLEMENTATION
@@ -425,11 +440,19 @@ NODISCARD
 static void* fixed_buffer_realloc(struct Allocator self, void * old_mem, unsigned long new_byte_count)
 #ifdef ALLOCATOR_IMPLEMENTATION
 {
-    /*FixedBufferCtx * ctx = self.ctx;*/
+    FixedBufferCtx * ctx = self.ctx;
     const unsigned long old_mem_byte_count = *(((unsigned long *) old_mem) - 1);
-    char * mem = fixed_buffer_alloc(self, new_byte_count);
-    memory_copy(mem, old_mem, old_mem_byte_count); 
-    return mem;
+    /*check if old_mem is at the top*/
+    if(is_mem_top(*ctx, old_mem)) {
+        *(((unsigned long *) old_mem) - 1) = new_byte_count;
+        ctx->i -= old_mem_byte_count;
+        ctx->i += new_byte_count;
+        return old_mem;
+    } else {
+        char * mem = fixed_buffer_alloc(self, new_byte_count);
+        memory_copy(mem, old_mem, old_mem_byte_count); 
+        return mem;
+    }
 }
 #else
 ;
@@ -438,8 +461,11 @@ static void* fixed_buffer_realloc(struct Allocator self, void * old_mem, unsigne
 static void fixed_buffer_free(struct Allocator self, void * mem)
 #ifdef ALLOCATOR_IMPLEMENTATION
 {
-    (void) self;
-    (void) mem;
+    FixedBufferCtx * ctx = self.ctx;
+    if(is_mem_top(*ctx, mem)) {
+        const unsigned long byte_count = *(((unsigned long *) mem) - 1);
+        ctx->i -= byte_count;
+    }
 }
 #else
 ;
