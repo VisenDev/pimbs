@@ -19,10 +19,11 @@
     #define LIKELY_TRUE(expr) expr
     #define LIKELY_FALSE(expr) expr
     #define PURE_FUNCTION
-    #if (defined(USE_STDLIB) && USE_STDLIB == 1)
-        #define ABORT() (*(volatile int *)0) = 0
-    #else 
+    #if defined(USE_STDLIB) && USE_STDLIB == 1
+        #include <stdlib.h>
         #define ABORT() abort()
+    #else 
+        #define ABORT() (*(volatile int *)0) = 0
     #endif /*USE_STDLIB*/
 #endif /*GCC or Clang*/
 

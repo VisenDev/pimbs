@@ -32,7 +32,7 @@
 #define ptrdiff_t_specifier "%td"
 
 
-#define log_location() LOG_FUNCTION("   File: %s, Function: %s, Line: %d\n", __FILE__, __func__, __LINE__)
+#define log_location() LOG_FUNCTION("   File: %s, Line: %d\n", __FILE__, __LINE__)
        
 #define debug_assert(type, lhs, operator, rhs) \
     do { \
@@ -59,7 +59,7 @@
     } while (0)
 
 #define inline_assert(expression) \
-    LIKELY_TRUE(expression) ? (void)0 : (log_location(), ABORT())
+    LIKELY_TRUE(expression) ? (void)0 : (void)(log_location(), ABORT())
 
 
 

@@ -1,26 +1,69 @@
-CFLAGSFILE=CFLAGS
-CFLAGS=$(shell grep -v '\#' $(CFLAGSFILE) )
+CLANG=clang
+COSMOCC=~/c/cosmocc/bin/cosmocc
 SRCDIR=src
-CC=clang
 BUILDDIR=build
 TESTFILE=run_tests.c
 TESTEXE=$(BUILDDIR)/test
+CFLAGS =-std=c89 \
+		-pedantic \
+		-g \
+		-O3 \
+		-Wextra \
+		-Wall \
+		-Wfloat-equal \
+		-Wundef \
+		-Wshadow \
+		-Wcast-align \
+		-Wstrict-prototypes \
+		-Wwrite-strings \
+		-Wstrict-overflow=5 \
+		-Wcast-qual \
+		-Wswitch-enum \
+		-Wconversion \
+		-Wunreachable-code \
+		-Wpointer-arith \
+		-Wuninitialized \
+		-Winit-self \
+		-Wdouble-promotion \
+		-Wformat \
+		-Wformat-security \
+		-Wnull-dereference \
+		-Wunused \
+		-Wimplicit-fallthrough \
+		-Wunused-result \
+		-Wno-unused-parameter \
+		-Wold-style-definition \
+		-Wredundant-decls \
+		-Wnested-externs \
+		-Wmissing-include-dirs 
+TEST_CFLAGS= \
+		$(CFLAGS) \
+		-Wno-missing-prototypes \
+		-Wno-unsafe-buffer-usage \
+		-Wno-padded \
+		-Weverything \
+		-Werror \
+		-fsanitize=address \
+		-fsanitize=undefined \
+		-ferror-limit=1 
 
 
-all: $(TESTFILE) $(SRCDIR)/*h $(CFLAGSFILE) builddir
-	$(CC) -DUSE_STDLIB=1 $(TESTFILE) $(CFLAGS) -o $(TESTEXE)
 
-$(TESTEXE): all
 
-builddir:
+test: $(TESTFILE) $(SRCDIR)/*h 
 	@mkdir -p $(BUILDDIR)
+	$(CLANG) -DUSE_STDLIB=1 $(TESTFILE) $(TEST_CFLAGS) -o $(TESTEXE)
+	./$(TESTEXE)
 
-nostdlib: $(TESTFILE) $(SRCDIR)/*h $(CFLAGSFILE) builddir
-	$(CC) -DUSE_STDLIB=0 $(TESTFILE) $(CFLAGS) -nostdlib -lSystem -fno-sanitize=address -fno-sanitize=undefined -o $(TESTEXE) 
+nostdlib: $(TESTFILE) $(SRCDIR)/*h 
+	@mkdir -p $(BUILDDIR)
+	$(CLANG) -DUSE_STDLIB=0 $(TESTFILE) $(CFLAGS) -nostdlib -lSystem -o $(TESTEXE) 
+	./$(TESTEXE)
 
 # Rule to build and run tests
-.PHONY: test
-test: $(TESTEXE)
+portable: 
+	@mkdir -p $(BUILDDIR)
+	$(COSMOCC) -DUSE_STDLIB=1 $(TESTFILE) $(CFLAGS) -fno-sanitize=address -fno-sanitize=undefined -o $(TESTEXE) 
 	./$(TESTEXE)
 
 # Clean rule

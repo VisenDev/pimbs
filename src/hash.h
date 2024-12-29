@@ -98,19 +98,19 @@ HASH_TYPE * CONCAT(HASH_NAME, _get)(HASH_NAME * self, const char * const key)
 {
     const unsigned long keylen = string_length_fixed(key);
     const unsigned long index = CONCAT(HASH_NAME, _hash)(self, key, keylen);
-    const BucketVec * vec = CONCAT(BucketVecSet, _get)(&self->buckets, index);
+    const BucketVec * bucketvec = CONCAT(BucketVecSet, _get)(&self->buckets, index);
 
     /*ensure index exists*/
-    if(vec == NULL) {
+    if(bucketvec == NULL) {
         return NULL;
     } 
 
     /*search vec for key*/
     {
         unsigned long i = 0;
-        for(i = 0; i < vec->len; ++i) {
-            if(string_equal_fixed(vec->items[i].key, key)) {
-                return &vec->items[i].value;
+        for(i = 0; i < bucketvec->len; ++i) {
+            if(string_equal_fixed(bucketvec->items[i].key, key)) {
+                return &bucketvec->items[i].value;
             }
         }
     }
@@ -134,8 +134,8 @@ int CONCAT(HASH_NAME, _put)(Allocator a, HASH_NAME * self, const char * const ke
         /*insert new value*/
         const unsigned long keylen = string_length_fixed(key);
         const unsigned long index = CONCAT(HASH_NAME, _hash)(self, key, keylen);
-        BucketVec * vec = CONCAT(BucketVecSet, _get_or_set)(a, &self->buckets, index, CONCAT(BucketVec, _init)());
-        if(vec == NULL) {
+        BucketVec * bucketvec = CONCAT(BucketVecSet, _get_or_set)(a, &self->buckets, index, CONCAT(BucketVec, _init)());
+        if(bucketvec == NULL) {
             tui_printf1("BucketVec for key %s failed to allocate", key);
             return ERR_ALLOCATION_FAILURE;
         } else {
@@ -145,7 +145,7 @@ int CONCAT(HASH_NAME, _put)(Allocator a, HASH_NAME * self, const char * const ke
             bucket.key = fixed_string_init(key);
             bucket.value = value;
 
-            err = CONCAT(BucketVec, _append)(a, vec, bucket);
+            err = CONCAT(BucketVec, _append)(a, bucketvec, bucket);
             if(err != ERR_NONE) {
                 return err;
             }
