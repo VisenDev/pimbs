@@ -134,7 +134,7 @@ int CONCAT(HASH_NAME, _put)(Allocator a, HASH_NAME * self, const char * const ke
         /*insert new value*/
         const unsigned long keylen = string_length_fixed(key);
         const unsigned long index = CONCAT(HASH_NAME, _hash)(self, key, keylen);
-        BucketVec * bucketvec = CONCAT(BucketVecSet, _get_or_set)(a, &self->buckets, index, CONCAT(BucketVec, _init)());
+        BucketVec * bucketvec = CONCAT(BucketVecSet, _get_or_put)(a, &self->buckets, index, CONCAT(BucketVec, _init)());
         if(bucketvec == NULL) {
             tui_printf1("BucketVec for key %s failed to allocate", key);
             return ERR_ALLOCATION_FAILURE;
@@ -169,3 +169,31 @@ int CONCAT(HASH_NAME, _delete)(HASH_NAME * self, const char * const key)
 #else
 ;
 #endif
+
+
+NODISCARD 
+HASH_TYPE * CONCAT(HASH_NAME, _get_or_put)(Allocator a, HASH_NAME * self, const unsigned long index, HASH_TYPE fallback_value)
+#ifdef SSET_IMPLEMENTATION
+{
+    HASH_TYPE * found = CONCAT(HASH_NAME, _get)(self, index);
+    if(found == NULL) {
+        int err = CONCAT(HASH_NAME, _put)(a, self, index, fallback_value);
+        if(err != ERR_NONE) {
+            log_location();
+            tui_printf2("get or set sparse set index %lu failed because %s\n", index, error_name(err));
+            return NULL;
+        } 
+        found = CONCAT(HASH_NAME, _get)(self, index);
+        simple_assert(found != NULL, "found should not be null once it has been set");
+        return found;
+    } else {
+        return found;
+    }
+}
+#else
+;
+#endif
+
+#undef HASH_NAME
+#undef HASH_TYPE
+#undef HASH_IMPLEMENTATION

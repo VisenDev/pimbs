@@ -160,7 +160,7 @@ VEC_TYPE * CONCAT(VEC_NAME, _top)(const VEC_NAME * const self)
     if(self->len <= 0) {
         return NULL;
     } else {
-        return self->items[self->len - 1];
+        return &self->items[self->len - 1];
     }
 
 }
@@ -170,10 +170,10 @@ VEC_TYPE * CONCAT(VEC_NAME, _top)(const VEC_NAME * const self)
 
 
 NODISCARD 
-VEC_TYPE * CONCAT(VEC_NAME, _pop)(const VEC_NAME * const self)
+VEC_TYPE * CONCAT(VEC_NAME, _pop)(VEC_NAME * self)
 #ifdef VEC_IMPLEMENTATION
 {
-    const VEC_TYPE * top = CONCAT(VEC_NAME, _top)(self);
+    VEC_TYPE * top = CONCAT(VEC_NAME, _top)(self);
     if(top == NULL) {
         return NULL;
     } else {
@@ -189,7 +189,7 @@ VEC_TYPE * CONCAT(VEC_NAME, _pop)(const VEC_NAME * const self)
 
 
 NODISCARD 
-VEC_TYPE * CONCAT(VEC_NAME, _swap_pop_top)(const VEC_NAME * const self, unsigned long index)
+VEC_TYPE * CONCAT(VEC_NAME, _swap_pop_top)(VEC_NAME * self, unsigned long index)
 #ifdef VEC_IMPLEMENTATION
 {
     if(self->len <= 0) {
@@ -197,7 +197,7 @@ VEC_TYPE * CONCAT(VEC_NAME, _swap_pop_top)(const VEC_NAME * const self, unsigned
     } else if (self->len == 1) {
         return CONCAT(VEC_NAME, _pop)(self);
     } else {
-        const int err CONCAT(VEC_NAME, _swap)(self, self->len - 1, index);
+        const int err = CONCAT(VEC_NAME, _swap)(self, self->len - 1, index);
         if(err != ERR_NONE) {
             return NULL;
         }

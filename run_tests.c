@@ -33,6 +33,12 @@
 #define HASH_TYPE long
 #include "src/hash.h"
 
+
+#define KVECS_TYPE long
+#define KVECS_NAME ecs
+#define KVECS_IMPLEMENTATION
+#include "src/kvecs.h"
+
 #include "src/defer.h"
 
 

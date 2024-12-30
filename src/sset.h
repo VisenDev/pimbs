@@ -213,9 +213,8 @@ int CONCAT(SSET_NAME, _delete)(SSET_NAME * self, const unsigned long index)
 #endif
 
 
-/*TODO rename to _get_or_put*/
 NODISCARD 
-SSET_TYPE * CONCAT(SSET_NAME, _get_or_set)(Allocator a, SSET_NAME * self, const unsigned long index, SSET_TYPE fallback_value)
+SSET_TYPE * CONCAT(SSET_NAME, _get_or_put)(Allocator a, SSET_NAME * self, const unsigned long index, SSET_TYPE fallback_value)
 #ifdef SSET_IMPLEMENTATION
 {
     SSET_TYPE * found = CONCAT(SSET_NAME, _get)(self, index);
