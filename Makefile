@@ -63,7 +63,7 @@ nostdlib: $(TESTFILE) $(SRCDIR)/*h
 # Rule to build and run tests
 portable: 
 	@mkdir -p $(BUILDDIR)
-	$(COSMOCC) -DUSE_STDLIB=1 $(TESTFILE) $(CFLAGS) -fno-sanitize=address -fno-sanitize=undefined -o $(TESTEXE) 
+	$(COSMOCC) -DUSE_STDLIB=1 $(TESTFILE) $(CFLAGS) -Werror -fno-sanitize=address -fno-sanitize=undefined -o $(TESTEXE) 
 	./$(TESTEXE)
 
 # Clean rule

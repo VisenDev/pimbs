@@ -19,7 +19,7 @@
     #define LIKELY_TRUE(expr) expr
     #define LIKELY_FALSE(expr) expr
     #define PURE_FUNCTION
-    #if defined(USE_STDLIB) && USE_STDLIB == 1
+    #if USE_STDLIB == 1
         #include <stdlib.h>
         #define ABORT() abort()
     #else 

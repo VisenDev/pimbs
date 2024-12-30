@@ -152,6 +152,62 @@ int CONCAT(VEC_NAME, _swap) (VEC_NAME * self, unsigned long lhs, unsigned long r
 #else 
 ;
 #endif
+
+NODISCARD 
+VEC_TYPE * CONCAT(VEC_NAME, _top)(const VEC_NAME * const self)
+#ifdef VEC_IMPLEMENTATION
+{
+    if(self->len <= 0) {
+        return NULL;
+    } else {
+        return self->items[self->len - 1];
+    }
+
+}
+#else
+;
+#endif
+
+
+NODISCARD 
+VEC_TYPE * CONCAT(VEC_NAME, _pop)(const VEC_NAME * const self)
+#ifdef VEC_IMPLEMENTATION
+{
+    const VEC_TYPE * top = CONCAT(VEC_NAME, _top)(self);
+    if(top == NULL) {
+        return NULL;
+    } else {
+        self->len -= 1;
+        return top;
+    }
+
+}
+#else
+;
+#endif
+
+
+
+NODISCARD 
+VEC_TYPE * CONCAT(VEC_NAME, _swap_pop_top)(const VEC_NAME * const self, unsigned long index)
+#ifdef VEC_IMPLEMENTATION
+{
+    if(self->len <= 0) {
+        return 0;
+    } else if (self->len == 1) {
+        return CONCAT(VEC_NAME, _pop)(self);
+    } else {
+        const int err CONCAT(VEC_NAME, _swap)(self, self->len - 1, index);
+        if(err != ERR_NONE) {
+            return NULL;
+        }
+        return CONCAT(VEC_NAME, _pop)(self);
+    }
+
+}
+#else
+;
+#endif
     
 #undef VEC_NAME
 #undef VEC_TYPE
