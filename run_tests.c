@@ -1,6 +1,9 @@
 /*#include <stdio.h>
 #define LOG_FUNCTION printf*/
 
+#define TUI_IMPLEMENTATION
+#include "src/tui.h"
+
 #define TESTING_IMPLEMENTATION
 #include "src/testing.h"
 
@@ -33,11 +36,14 @@
 #define HASH_TYPE long
 #include "src/hash.h"
 
-
+/*
 #define KVECS_TYPE long
 #define KVECS_NAME ecs
 #define KVECS_IMPLEMENTATION
-#include "src/kvecs.h"
+#include "src/kvecs.h"*/
+
+#define FORMAT_IMPLEMENTATION
+#include "src/format.h"
 
 #include "src/defer.h"
 
@@ -52,6 +58,7 @@ int main(void) {
     /*Allocator libc = libc_allocator();*/
     /*Allocator logging = logging_allocator(&fixed);*/
     Allocator a = leak_check_allocator(&fixed);
+    static char fmtbuf[buflen];
 
     defer(cleanup)
     {
@@ -61,6 +68,40 @@ int main(void) {
         }
         testing_deinit(&t);
         leak_check_allocator_free(a);
+    }
+
+
+    testing_start_test(&t, "format_unsigned_long");
+    {
+        {
+            const unsigned long len = format_unsigned_long(fmtbuf, buflen, 1234567890123456789, 10);
+            testing_expect(&t, string_equal(fmtbuf, "1234567890123456789", len));
+        }
+        {
+            const unsigned long len = format_unsigned_long(fmtbuf, buflen, 0xDEADBEEF, 16);
+            testing_expect(&t, string_equal(fmtbuf, "DEADBEEF", len));
+        }
+    }
+
+
+    testing_start_test(&t, "format_double");
+    {
+        {
+            const unsigned long len = format_double(fmtbuf, buflen, 12345.67890, 5);
+            testing_expect(&t, string_equal(fmtbuf, "12345.67890", len));
+        }
+        {
+            const unsigned long len = format_double(fmtbuf, buflen, 12345.67890, 2);
+            testing_expect(&t, string_equal(fmtbuf, "12345.67", len));
+        }
+        {
+            const unsigned long len = format_double(fmtbuf, buflen, 12345.67890, 0);
+            testing_expect(&t, string_equal(fmtbuf, "12345", len));
+        }
+        {
+            const unsigned long len = format_double(fmtbuf, buflen, -12345.67890, 6);
+            testing_expect(&t, string_equal(fmtbuf, "-12345.678900", len));
+        }
     }
 
 
@@ -169,7 +210,7 @@ int main(void) {
 
         testing_start_test(&t, "sset.get_or_set");
         for(i = 30000; i < 40000; i += 1){
-            const int * value = sset_get_or_set(a, &s, i, (int)i);
+            const int * value = sset_get_or_put(a, &s, i, (int)i);
             testing_expect(&t, SAFE_DEREF(value) == (int)i);
         }
 
@@ -211,3 +252,4 @@ int main(void) {
     deferred(cleanup);
     return 0;
 }
+

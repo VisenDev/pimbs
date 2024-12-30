@@ -86,7 +86,7 @@ static void testing_update_overall(TestingState * state)
 
     if(state->active.name != NULL) {
         if(state->active.failed != 0) {
-            tui_printf(TUI_YELLOW"[completed]\n"); 
+            tui_printf(TUI_RED  "[failed...]\n"); 
         } else {
             tui_printf(TUI_GREEN"[completed]\n"); 
         }
@@ -142,10 +142,17 @@ static void testing_expect_internal(TestingState * state, const int condition, c
     if(condition) {
         state->active.passed += 1;
     } else {
-        tui_printf2("./testing.%s.%d... ", state->active.name, state->active.passed + state->active.failed); 
-        tui_printf(TUI_RED"[FAILED]\n");
-        tui_printf2(TUI_RED"   -> %s:%i\n", file , line); 
-        state->active.failed += 1;
+        tui_printf("\n");
+        LOG_FUNCTION(TUI_RED);
+        {
+            const int characters = LOG_FUNCTION("   -> %s:%i", file , line); 
+            int i = 0;
+            LOG_FUNCTION(TUI_RESET);
+            for(i = 0; i < 40 - characters; ++i) {
+                tui_printf(" ");
+            }
+            state->active.failed += 1;
+        }
     }
 }
 #else

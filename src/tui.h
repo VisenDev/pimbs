@@ -1,7 +1,8 @@
-#if !defined(TUI_H) || (defined(TUI_IMPLEMENTATION) && !defined(TUI_IMPLEMENTED))
+#if !defined(TUI_H)
+/*|| (defined(TUI_IMPLEMENTATION) && !defined(TUI_IMPLEMENTED))*/
 #define TUI_H
 #ifdef TUI_IMPLEMENTATION
-   #define TUI_IMPLEMENTED
+/**/#define TUI_IMPLEMENTED
 #endif
 
 #include "attributes.h"
@@ -35,5 +36,12 @@
 #define tui_printf3(fmt, a, b, c)       do {LOG_FUNCTION(fmt, a, b, c);       LOG_FUNCTION(TUI_RESET);} while(0)
 #define tui_printf4(fmt, a, b, c, d)    do {LOG_FUNCTION(fmt, a, b, c, d);    LOG_FUNCTION(TUI_RESET);} while(0)
 #define tui_printf5(fmt, a, b, c, d, e) do {LOG_FUNCTION(fmt, a, b, c, d, e); LOG_FUNCTION(TUI_RESET);} while(0)
+
+
+/*TODO:
+ * define all ansi escape codes
+ * implement print function
+ */
+
 
 #endif /*TUI_H*/
