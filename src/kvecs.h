@@ -1,4 +1,4 @@
-ifndef KVECS_TYPE 
+#ifndef KVECS_TYPE 
     #error "KVECS_TYPE must be defined before including \"kvecs.h\""
 #endif 
        
@@ -95,7 +95,7 @@ KVECS_NAME CONCAT(KVECS_NAME, _init)(void)
 void CONCAT(KVECS_NAME, _free)(Allocator a, KVECS_NAME * self)
 #ifdef KVECS_IMPLEMENTATION
 {
-    unsigned long i = 0;
+    /*unsigned long i = 0;*/
     CONCAT(IdVec, _free)(a, &self->free_ids);
     
     /*for(i = 0; i < &self->components.*/

@@ -258,6 +258,22 @@ static int leak_check_count_leaks(struct Allocator self)
 ;
 #endif
 
+
+
+void leak_check_print_leaks(struct Allocator self)
+#ifdef ALLOCATOR_IMPLEMENTATION
+{
+    LeakCheckCtx * ctx = self.ctx;
+    unsigned long i = 0;
+    for(i = 0; i < ctx->alloc_records.len; ++i) {
+        const Allocation alloc = ctx->alloc_records.items[i];
+        tui_printf2("leaked address %p containing %lu bytes\n", alloc.ptr, alloc.byte_count);
+    }
+}
+#else
+;
+#endif
+
 NODISCARD PURE_FUNCTION
 Allocator leak_check_allocator(Allocator * child)
 #ifdef ALLOCATOR_IMPLEMENTATION

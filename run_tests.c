@@ -75,23 +75,25 @@ int main(void) {
     if(leak_check_count_leaks(a) != 0) {
         tui_printf1("pre kvecs leak count: %d\n", leak_check_count_leaks(a));
     }
+    tui_printf1("pre kvecs leak count: %d\n", leak_check_count_leaks(a));
 
 
     testing_start_test(&t, "kvecs");
     {
         ecs e = ecs_init();
         const Id entity = ecs_new_entity(a, &e);
-        (void)entity;
-        /*const EcsType x_velocity = {1, 1};
-        const int err = ecs_set(a, &e, entity, "x_velocity", x_velocity);*/
+        /*(void)entity;*/
+        const EcsType x_velocity = {1, 1};
+        const int err = ecs_set(a, &e, entity, "x_velocity", x_velocity);
         tui_printf("freeing \n");
-        /*testing_expect(&t, err == ERR_NONE);*/
+        testing_expect(&t, err == ERR_NONE);
         ecs_free(a, &e);
     }
 
 
     if(leak_check_count_leaks(a) != 0) {
         tui_printf1("post kvecs leak count: %d\n", leak_check_count_leaks(a));
+        leak_check_print_leaks(a);
     }
 
 
