@@ -7,7 +7,6 @@ TESTEXE=$(BUILDDIR)/test
 CFLAGS =-std=c89 \
 		-pedantic \
 		-g \
-		-O3 \
 		-Wextra \
 		-Wall \
 		-Wfloat-equal \

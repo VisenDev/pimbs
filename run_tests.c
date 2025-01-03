@@ -37,8 +37,7 @@
 #include "src/hash.h"
 
 
-typedef struct {int integer; float decimal;} EcsType;
-#define KVECS_TYPE EcsType
+#define KVECS_TYPE double
 #define KVECS_NAME ecs
 #define KVECS_IMPLEMENTATION
 #include "src/kvecs.h"
@@ -71,7 +70,6 @@ int main(void) {
         leak_check_allocator_free(a);
     }
 
-
     if(leak_check_count_leaks(a) != 0) {
         tui_printf1("pre kvecs leak count: %d\n", leak_check_count_leaks(a));
     }
@@ -81,12 +79,32 @@ int main(void) {
     testing_start_test(&t, "kvecs");
     {
         ecs e = ecs_init();
-        const Id entity = ecs_new_entity(a, &e);
-        /*(void)entity;*/
-        const EcsType x_velocity = {1, 1};
-        const int err = ecs_set(a, &e, entity, "x_velocity", x_velocity);
-        tui_printf("freeing \n");
-        testing_expect(&t, err == ERR_NONE);
+        int err = ERR_NONE;
+        unsigned int i = 0;
+
+
+        for(i = 0; i < 100; ++i) {
+            const Id entity = ecs_new_entity(a, &e);
+            const Id phys = ecs_set_child(a, &e, entity, "physics");
+            const Id vel = ecs_set_child(a, &e, phys, "velocity");
+            const Id acc = ecs_set_child(a, &e, phys, "acceleration");
+
+            testing_expect(&t, entity.index != NULL_ID);
+
+            err = ecs_set(a, &e, vel, "x", 1.0);
+            testing_expect(&t, err == ERR_NONE);
+            err = ecs_set(a, &e, vel, "y", 1.0);
+            testing_expect(&t, err == ERR_NONE);
+
+            err = ecs_set(a, &e, acc, "x", 0.1);
+            testing_expect(&t, err == ERR_NONE);
+            err = ecs_set(a, &e, acc, "y", 0.1);
+            testing_expect(&t, err == ERR_NONE);
+
+            err = ecs_set(a, &e, phys, "friction", 0.01);
+            testing_expect(&t, err == ERR_NONE);
+        }
+
         ecs_free(a, &e);
     }
 

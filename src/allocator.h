@@ -16,6 +16,12 @@
 #define DEREF_OR_NULL(ptr) ptr == NULL ? NULL : *ptr
 #define SAFE_DEREF(ptr) (inline_assert(ptr != NULL), *ptr)
 
+#define log_alloc(allocator, byte_count) \
+(LOG_FUNCTION("allocating %lu bytes at %s line %d\n", byte_count, __FILE__, __LINE__), allocator.alloc(allocator, byte_count))
+
+#define log_realloc(allocator, oldmem, byte_count) \
+(LOG_FUNCTION("reallocating %lu bytes at %s line %d\n", byte_count, __FILE__, __LINE__), allocator.realloc(allocator, oldmem, byte_count))
+
 struct Allocator;
 
 typedef void* (*AllocFn)(struct Allocator,unsigned long);
@@ -96,7 +102,11 @@ static void* logging_alloc (struct Allocator self, unsigned long byte_count)
 {
     Allocator child = *(Allocator *)self.ctx;
     void * bytes = child.alloc(child, byte_count);
-    tui_printf3(TUI_YELLOW"Allocating %p with %lu bytes via ctx %p\n", bytes, byte_count, self.ctx);
+    if(bytes == NULL) {
+        tui_printf3(TUI_YELLOW"Allocating %p with %lu bytes via ctx %p failed\n", bytes, byte_count, self.ctx);
+    } else {
+        tui_printf3(TUI_YELLOW"Allocating %p with %lu bytes via ctx %p\n", bytes, byte_count, self.ctx);
+    }
     return bytes;
 }
 #else
@@ -110,6 +120,12 @@ static void* logging_realloc (struct Allocator self, void * old_mem, unsigned lo
     Allocator child = *(Allocator *) self.ctx;
     void* bytes = child.realloc(child, old_mem, new_byte_count);
     tui_printf4(TUI_YELLOW"Reallocating %p to %p to store %lu total bytes via ctx %p\n", old_mem, bytes, new_byte_count, self.ctx);
+
+    if(bytes == NULL) {
+        tui_printf4(TUI_YELLOW"Reallocating %p to %p to store %lu total bytes via ctx %p failed\n", old_mem, bytes, new_byte_count, self.ctx);
+    } else {
+        tui_printf4(TUI_YELLOW"Reallocating %p to %p to store %lu total bytes via ctx %p\n", old_mem, bytes, new_byte_count, self.ctx);
+    }
     return bytes;
 }
 #else

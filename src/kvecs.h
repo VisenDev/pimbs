@@ -82,7 +82,7 @@ KVECS_NAME CONCAT(KVECS_NAME, _init)(void)
 {
     KVECS_NAME result = {0};
     result.free_ids = CONCAT(IdVec, _init)();
-    /*result.max_id = {0};*/
+    result.max_id = null_id;
     result.components = CONCAT(Components, _init)();
     result.children = CONCAT(Children, _init)();
     return result;
@@ -95,10 +95,22 @@ KVECS_NAME CONCAT(KVECS_NAME, _init)(void)
 void CONCAT(KVECS_NAME, _free)(Allocator a, KVECS_NAME * self)
 #ifdef KVECS_IMPLEMENTATION
 {
-    /*unsigned long i = 0;*/
+    unsigned long i = 0;
+    unsigned long j = 0;
     CONCAT(IdVec, _free)(a, &self->free_ids);
     
-    /*for(i = 0; i < &self->components.*/
+    for(i = 0; i < self->components.buckets.dense.len; ++i) {
+        for(j = 0; j < self->components.buckets.dense.items[i].len; ++j) {
+            CONCAT(ValueSet, _free)(a, &self->components.buckets.dense.items[i].items[j].value);
+        }
+    }
+
+    for(i = 0; i < self->children.buckets.dense.len; ++i) {
+        for(j = 0; j < self->children.buckets.dense.items[i].len; ++j) {
+            CONCAT(ChildSet, _free)(a, &self->children.buckets.dense.items[i].items[j].value);
+        }
+    }
+
     CONCAT(Components, _free)(a, &self->components);  
     CONCAT(Children, _free)(a, &self->children);
 }
@@ -114,7 +126,7 @@ int CONCAT(KVECS_NAME, _allocate_more_ids)(Allocator a, KVECS_NAME * self)
 
     const Id old_max = self->max_id;
     long i = 0;
-    self->max_id.index = (self->max_id.index + 1) * 2;
+    self->max_id.index = (self->max_id.index + 5) * 2;
     for(i = old_max.index; i < self->max_id.index; ++i) {
         Id new_id = {0};
         new_id.index = i;
