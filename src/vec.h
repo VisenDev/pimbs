@@ -58,7 +58,7 @@ int CONCAT(VEC_NAME, _ensure_capacity) (Allocator a, VEC_NAME * self, unsigned l
 #ifdef VEC_IMPLEMENTATION
 {
     if(self->items == NULL) {
-        VEC_TYPE * newmem = a.alloc(a, capacity * sizeof(VEC_TYPE));
+        void * newmem = a.alloc(a, capacity * sizeof(VEC_TYPE));
         if(newmem == NULL) {
             return ERR_ALLOCATION_FAILURE;
         } else {
@@ -67,7 +67,7 @@ int CONCAT(VEC_NAME, _ensure_capacity) (Allocator a, VEC_NAME * self, unsigned l
         }
 
     } else if(self->cap < capacity) {
-        VEC_TYPE * newmem = a.realloc(a, self->items, capacity * sizeof(VEC_TYPE));
+        void * newmem = a.realloc(a, self->items, capacity * sizeof(VEC_TYPE));
         if(newmem == NULL) {
             return ERR_ALLOCATION_FAILURE;
         } else {
@@ -101,7 +101,8 @@ int CONCAT(VEC_NAME, _append) (Allocator a, VEC_NAME * self, VEC_TYPE value)
         self->len += 1;
         index = self->len - 1;
         simple_assert(index < self->cap, "index is valid");
-        self->items[index] = value;
+        memory_copy(&self->items[index], &value, sizeof(VEC_TYPE));
+        /*self->items[index] = value;*/
         return ERR_NONE;
     }
 }

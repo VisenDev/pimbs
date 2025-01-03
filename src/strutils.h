@@ -9,7 +9,7 @@ typedef struct {
 } String;
 
 NODISCARD 
-static int string_equal( const char * const lhs, const char * const  rhs, unsigned long maxlen )
+static int string_equal(const char * const lhs, const char * const rhs, unsigned long maxlen )
 {
     unsigned long i = 0;
     for(i = 0; i < maxlen; ++i) {

@@ -172,18 +172,20 @@ int CONCAT(HASH_NAME, _delete)(HASH_NAME * self, const char * const key)
 
 
 NODISCARD 
-HASH_TYPE * CONCAT(HASH_NAME, _get_or_put)(Allocator a, HASH_NAME * self, const unsigned long index, HASH_TYPE fallback_value)
-#ifdef SSET_IMPLEMENTATION
+HASH_TYPE * CONCAT(HASH_NAME, _get_or_put)(Allocator a, HASH_NAME * self, const char * const key, HASH_TYPE fallback_value)
+#ifdef HASH_IMPLEMENTATION
 {
-    HASH_TYPE * found = CONCAT(HASH_NAME, _get)(self, index);
+    HASH_TYPE * found = CONCAT(HASH_NAME, _get)(self, key);
     if(found == NULL) {
-        int err = CONCAT(HASH_NAME, _put)(a, self, index, fallback_value);
+        /*const unsigned long keylen = string_length_fixed(key);
+        const unsigned long index = CONCAT(HASH_NAME, _hash)(self, key, keylen);*/
+        int err = CONCAT(HASH_NAME, _put)(a, self, key, fallback_value);
         if(err != ERR_NONE) {
             log_location();
-            tui_printf2("get or set sparse set index %lu failed because %s\n", index, error_name(err));
+            /*tui_printf2("get or set sparse set index %lu failed because %s\n", index, error_name(err));*/
             return NULL;
         } 
-        found = CONCAT(HASH_NAME, _get)(self, index);
+        found = CONCAT(HASH_NAME, _get)(self, key);
         simple_assert(found != NULL, "found should not be null once it has been set");
         return found;
     } else {

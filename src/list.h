@@ -22,7 +22,7 @@ typedef struct LIST_NAME {
 } LIST_NAME;
 
 NODISCARD 
-static LIST_NAME * CONCAT(LIST_NAME, _cons)(Allocator a, LIST_TYPE value, struct LIST_NAME * next)
+LIST_NAME * CONCAT(LIST_NAME, _cons)(Allocator a, LIST_TYPE value, struct LIST_NAME * next)
 #ifdef LIST_IMPLEMENTATION
 {
     LIST_NAME * node = a.alloc(a, sizeof(LIST_NAME)); 
@@ -37,7 +37,7 @@ static LIST_NAME * CONCAT(LIST_NAME, _cons)(Allocator a, LIST_TYPE value, struct
 ;
 #endif
 
-static void CONCAT(LIST_NAME, _free)(Allocator a, LIST_NAME * start)
+void CONCAT(LIST_NAME, _free)(Allocator a, LIST_NAME * start)
 #ifdef LIST_IMPLEMENTATION
 {
     if(start != NULL) {

@@ -1,4 +1,4 @@
-#ifndef KVECS_TYPE 
+ifndef KVECS_TYPE 
     #error "KVECS_TYPE must be defined before including \"kvecs.h\""
 #endif 
        
@@ -18,7 +18,9 @@
         long index;
     } Id;
     #define NULL_ID -1
-    #define UNPACK_ID(id) (inline_assert(id.index != NULL_ID), id.index)
+    #define UNPACK_ID(id) (inline_assert(id.index != NULL_ID), (unsigned long)id.index)
+
+    static const Id null_id = {NULL_ID};
 
 #endif /*KVECS_H*/
 
@@ -89,6 +91,22 @@ KVECS_NAME CONCAT(KVECS_NAME, _init)(void)
 ;
 #endif
 
+
+void CONCAT(KVECS_NAME, _free)(Allocator a, KVECS_NAME * self)
+#ifdef KVECS_IMPLEMENTATION
+{
+    unsigned long i = 0;
+    CONCAT(IdVec, _free)(a, &self->free_ids);
+    
+    /*for(i = 0; i < &self->components.*/
+    CONCAT(Components, _free)(a, &self->components);  
+    CONCAT(Children, _free)(a, &self->children);
+}
+#else
+;
+#endif
+
+
 NODISCARD 
 int CONCAT(KVECS_NAME, _allocate_more_ids)(Allocator a, KVECS_NAME * self)
 #ifdef KVECS_IMPLEMENTATION
@@ -101,10 +119,13 @@ int CONCAT(KVECS_NAME, _allocate_more_ids)(Allocator a, KVECS_NAME * self)
         Id new_id = {0};
         new_id.index = i;
         {
+                tui_printf("\nappending new ids\n");
+                {
             const int err = CONCAT(IdVec, _append)(a, &self->free_ids, new_id);
             if(err != ERR_NONE) {
                 return err;
             }
+                }
         }
     }
     return ERR_NONE;
@@ -114,31 +135,31 @@ int CONCAT(KVECS_NAME, _allocate_more_ids)(Allocator a, KVECS_NAME * self)
 #endif
 
 NODISCARD
-Id CONCAT(KVECS_NAME, _new_entity)(KVECS_NAME * self, Allocator a) 
+Id CONCAT(KVECS_NAME, _new_entity)(Allocator a, KVECS_NAME * self)
 #ifdef KVECS_IMPLEMENTATION
 {
-    Id * top = CONCAT(IdVec, _top)(&self->free_ids);
+    Id * top = CONCAT(IdVec, _pop)(&self->free_ids);
     if(top == NULL) {
         const int err = CONCAT(KVECS_NAME, _allocate_more_ids)(a, self);
         if(err != ERR_NONE) {
             Id result = {NULL_ID};
             return result;
         }
+        top = CONCAT(IdVec, _pop)(&self->free_ids);
         simple_assert(top != NULL, "getting new free id failed");
     }
-    /*TODO fix this code*/
-    return SAFE_DEREF(CONCAT(VEC_NAME, _swap_pop_top)(&self->free_ids));
-
+    return *top;
 }
 #else
 ;
 #endif
 
 NODISCARD 
-int CONCAT(KVECS_NAME, _set)(Allocator a, KVECS_NAME * self, Id id, char * key, KVECS_TYPE value)
+int CONCAT(KVECS_NAME, _set)(Allocator a, KVECS_NAME * self, Id id, const char * const key, KVECS_TYPE value)
 #ifdef KVECS_IMPLEMENTATION
 {
-    ValueSet * set = CONCAT(Components, _get_or_put)(&self->components, key);
+    ValueSet def = CONCAT(ValueSet, _init)();
+    ValueSet * set = CONCAT(Components, _get_or_put)(a, &self->components, key, def);
     if(set == NULL) {
         return ERR_ALLOCATION_FAILURE;
     } else {
@@ -152,7 +173,7 @@ int CONCAT(KVECS_NAME, _set)(Allocator a, KVECS_NAME * self, Id id, char * key, 
 #endif
 
 NODISCARD 
-KVECS_TYPE * CONCAT(KVECS_NAME, _get)(KVECS_NAME * self, Id id, char * key)
+KVECS_TYPE * CONCAT(KVECS_NAME, _get)(KVECS_NAME * self, Id id, const char * const key)
 #ifdef KVECS_IMPLEMENTATION
 {
     ValueSet * set = CONCAT(Components, _get)(&self->components, key);
@@ -168,18 +189,23 @@ KVECS_TYPE * CONCAT(KVECS_NAME, _get)(KVECS_NAME * self, Id id, char * key)
 #endif
 
 NODISCARD
-Id CONCAT(KVECS_NAME, _set_child)(Allocator a, KVECS_NAME * self, Id parent, char * key) 
+Id CONCAT(KVECS_NAME, _set_child)(Allocator a, KVECS_NAME * self, Id parent, const char * const key) 
 #ifdef KVECS_IMPLEMENTATION
 {
-    ChildSet * set = CONCAT(Children, _get_or_put)(&self->children, key);
+    ChildSet dflt = CONCAT(ChildSet, _init)();
+    ChildSet * set = CONCAT(Children, _get_or_put)(a, &self->children, key, dflt);
     if(set == NULL) {
-        return {NULL_ID};
+        return null_id;
     } else {
         const Id child = CONCAT(KVECS_NAME, _new_entity)(a, self);
         if(child.index == NULL_ID) {
-            return {NULL_ID};
+            return null_id;
         } else {
-            const int err = CONCAT(ChildSet, _put)(a, set, UNPACK_ID(id), child);
+            const int err = CONCAT(ChildSet, _put)(a, set, UNPACK_ID(parent), child);
+            if(err != ERR_NONE) {
+                return null_id;
+            }
+            return child;
         }
     }
 }
@@ -189,7 +215,7 @@ Id CONCAT(KVECS_NAME, _set_child)(Allocator a, KVECS_NAME * self, Id parent, cha
 
 
 NODISCARD 
-Id * CONCAT(KVECS_NAME, _get_child)(KVECS_NAME * self, Id parent, char * key)
+Id * CONCAT(KVECS_NAME, _get_child)(KVECS_NAME * self, Id parent, const char * const key)
 #ifdef KVECS_IMPLEMENTATION
 {
     ChildSet * set = CONCAT(Children, _get)(&self->children, key);

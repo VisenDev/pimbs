@@ -2,9 +2,9 @@
 #define ATTRIBUTES_H
 
 /*NODISCARD*/
-#if defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 202311L) /*check for C23*/
+#if defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 202311/*L*/) /*check for C23*/
     #define NODISCARD [[nodiscard]]
-#elif defined(__GNUC__) || defined(__clang__)
+#elif defined(__gcc__) || defined(__clang__)
     #define NODISCARD __attribute__((warn_unused_result))
 #else
     #define NODISCARD

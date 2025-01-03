@@ -2,7 +2,7 @@
 -pedantic
 -march=native
 -g
--O3
+-O1
 -ferror-limit=1
 -Werror
 -Weverything
@@ -11,3 +11,4 @@
 -Wno-padded
 -fsanitize=address
 -fsanitize=undefined
+-v

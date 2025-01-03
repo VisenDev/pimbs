@@ -1,8 +1,8 @@
-#if !defined(TUI_H)
-/*|| (defined(TUI_IMPLEMENTATION) && !defined(TUI_IMPLEMENTED))*/
+#ifndef TUI_H
 #define TUI_H
+
 #ifdef TUI_IMPLEMENTATION
-/**/#define TUI_IMPLEMENTED
+    #define TUI_IMPLEMENTED
 #endif
 
 #include "attributes.h"

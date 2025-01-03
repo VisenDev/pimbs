@@ -36,11 +36,12 @@
 #define HASH_TYPE long
 #include "src/hash.h"
 
-/*
-#define KVECS_TYPE long
+
+typedef struct {int integer; float decimal;} EcsType;
+#define KVECS_TYPE EcsType
 #define KVECS_NAME ecs
 #define KVECS_IMPLEMENTATION
-#include "src/kvecs.h"*/
+#include "src/kvecs.h"
 
 #define FORMAT_IMPLEMENTATION
 #include "src/format.h"
@@ -56,8 +57,8 @@ int main(void) {
     static char buf[buflen];
     Allocator fixed = fixed_buffer_allocator(buf, buflen);
     /*Allocator libc = libc_allocator();*/
-    /*Allocator logging = logging_allocator(&fixed);*/
-    Allocator a = leak_check_allocator(&fixed);
+    Allocator logging = logging_allocator(&fixed);
+    Allocator a = leak_check_allocator(&logging);
     static char fmtbuf[buflen];
 
     defer(cleanup)
@@ -68,6 +69,29 @@ int main(void) {
         }
         testing_deinit(&t);
         leak_check_allocator_free(a);
+    }
+
+
+    if(leak_check_count_leaks(a) != 0) {
+        tui_printf1("pre kvecs leak count: %d\n", leak_check_count_leaks(a));
+    }
+
+
+    testing_start_test(&t, "kvecs");
+    {
+        ecs e = ecs_init();
+        const Id entity = ecs_new_entity(a, &e);
+        (void)entity;
+        /*const EcsType x_velocity = {1, 1};
+        const int err = ecs_set(a, &e, entity, "x_velocity", x_velocity);*/
+        tui_printf("freeing \n");
+        /*testing_expect(&t, err == ERR_NONE);*/
+        ecs_free(a, &e);
+    }
+
+
+    if(leak_check_count_leaks(a) != 0) {
+        tui_printf1("post kvecs leak count: %d\n", leak_check_count_leaks(a));
     }
 
 
@@ -105,6 +129,12 @@ int main(void) {
     }
 
 
+    if(leak_check_count_leaks(a) != 0) {
+        tui_printf1("post fmt leak count: %d\n", leak_check_count_leaks(a));
+    }
+
+
+#if 0
     testing_start_test(&t, "memory_copy");
     {
         unsigned int i = 0;
@@ -247,6 +277,7 @@ int main(void) {
         testing_expect(&t, *hashmap_get(&h, "IDGAF") == 3);
         hashmap_free(a, &h);
     }
+#endif
 
 
     deferred(cleanup);
