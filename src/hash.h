@@ -71,6 +71,21 @@ void CONCAT(HASH_NAME, _free)(Allocator a, HASH_NAME * self)
 ;
 #endif
 
+void CONCAT(HASH_NAME, _foreach)(HASH_NAME * self, void * ctx, void (*fn)(void * ctx, HASH_TYPE * value))
+#ifdef HASH_IMPLEMENTATION
+{
+    unsigned long i = 0;
+    unsigned long j = 0;
+    for(i = 0; i < self->buckets.dense.len; ++i) {
+        for(j = 0; j < self->buckets.dense.items[i].len; ++j) {
+            fn(ctx, &self->buckets.dense.items[i].items[j].value);
+        }
+    }
+}
+#else
+;
+#endif
+
 
 NODISCARD 
 unsigned long CONCAT(HASH_NAME, _hash)(const HASH_NAME * const self, const char * const key, const unsigned long keylen) 

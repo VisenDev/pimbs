@@ -37,10 +37,15 @@
 #include "src/hash.h"
 
 
+/*
 #define KVECS_TYPE double
 #define KVECS_NAME ecs
 #define KVECS_IMPLEMENTATION
 #include "src/kvecs.h"
+*/
+
+#define KVECS_IMPLEMENTATION
+#include "src/json-ecs.h"
 
 #define FORMAT_IMPLEMENTATION
 #include "src/format.h"
@@ -56,8 +61,8 @@ int main(void) {
     static char buf[buflen];
     Allocator fixed = fixed_buffer_allocator(buf, buflen);
     /*Allocator libc = libc_allocator();*/
-    Allocator logging = logging_allocator(&fixed);
-    Allocator a = leak_check_allocator(&logging);
+    /*Allocator logging = logging_allocator(&fixed);*/
+    Allocator a = leak_check_allocator(&fixed);
     static char fmtbuf[buflen];
 
     defer(cleanup)
@@ -70,14 +75,8 @@ int main(void) {
         leak_check_allocator_free(a);
     }
 
-    if(leak_check_count_leaks(a) != 0) {
-        tui_printf1("pre kvecs leak count: %d\n", leak_check_count_leaks(a));
-    }
-    tui_printf1("pre kvecs leak count: %d\n", leak_check_count_leaks(a));
-
-
     testing_start_test(&t, "kvecs");
-    {
+    /*{
         ecs e = ecs_init();
         int err = ERR_NONE;
         unsigned int i = 0;
@@ -106,7 +105,7 @@ int main(void) {
         }
 
         ecs_free(a, &e);
-    }
+    }*/
 
 
     if(leak_check_count_leaks(a) != 0) {
@@ -154,7 +153,6 @@ int main(void) {
     }
 
 
-#if 0
     testing_start_test(&t, "memory_copy");
     {
         unsigned int i = 0;
@@ -297,7 +295,6 @@ int main(void) {
         testing_expect(&t, *hashmap_get(&h, "IDGAF") == 3);
         hashmap_free(a, &h);
     }
-#endif
 
 
     deferred(cleanup);

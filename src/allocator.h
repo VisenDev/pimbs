@@ -409,8 +409,8 @@ static void* fixed_buffer_alloc (struct Allocator self, unsigned long byte_count
 #ifdef ALLOCATOR_IMPLEMENTATION
 {
     FixedBufferCtx * ctx = self.ctx;
-    const unsigned short alignment = ALIGNOF(unsigned long);
-    const unsigned short padding_bytes = (alignment - (ctx->i % alignment)) % alignment;
+    const unsigned long alignment = ALIGNOF(unsigned long);
+    const unsigned long padding_bytes = (alignment - (ctx->i % alignment)) % alignment;
     const unsigned long bytes_needed = byte_count + sizeof(unsigned long) + padding_bytes;
 
     /* check buffer capacity */

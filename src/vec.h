@@ -58,7 +58,7 @@ int CONCAT(VEC_NAME, _ensure_capacity) (Allocator a, VEC_NAME * self, unsigned l
 #ifdef VEC_IMPLEMENTATION
 {
     if(self->items == NULL) {
-        void * newmem = log_alloc(a, capacity * sizeof(VEC_TYPE));
+        void * newmem = a.alloc(a, capacity * sizeof(VEC_TYPE));
         if(newmem == NULL) {
             return ERR_ALLOCATION_FAILURE;
         } else {
@@ -67,7 +67,7 @@ int CONCAT(VEC_NAME, _ensure_capacity) (Allocator a, VEC_NAME * self, unsigned l
         }
 
     } else if(self->cap < capacity) {
-        void * newmem = log_realloc(a, self->items, capacity * sizeof(VEC_TYPE));
+        void * newmem = a.realloc(a, self->items, capacity * sizeof(VEC_TYPE));
         if(newmem == NULL) {
             return ERR_ALLOCATION_FAILURE;
         } else {

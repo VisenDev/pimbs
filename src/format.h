@@ -23,11 +23,11 @@ format_unsigned_long(char * buf, const unsigned long buflen, const unsigned long
 
 
     for(i = 0; remaining != 0 && i < last_digit_i; ++i) {
-        const unsigned char digit = (unsigned char)(remaining % radix);
+        const char digit = (char)(remaining % radix);
         if(digit >= 10) {
-            tmp[i] = (digit - 10) + 'A';
+            tmp[i] = (char)(digit - 10) + 'A';
         } else {
-            tmp[i] = digit + '0';
+            tmp[i] = (char)digit + '0';
         }
 
         remaining /= radix;
@@ -152,7 +152,7 @@ format_double(char * buf, const unsigned long buflen, const double number, const
             fraction -= digit;
 
             if (digits_used < buflen - 1) {
-                buf[digits_used] = '0' + digit;
+                buf[digits_used] = (char)('0' + digit);
                 digits_used += 1;
             } else {
                 return digits_used;
