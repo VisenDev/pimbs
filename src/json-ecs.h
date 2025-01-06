@@ -223,7 +223,7 @@ kv_id kv_ecs_parse_json(Allocator a, struct kv_ecs * self, const char * const js
 
 
 
-
+*/
 
 
 
@@ -243,7 +243,7 @@ void ideal_syntax_test(void) {
     }
 
     {
+        const 
         const kv_id_vec ids = e.get_domain(&e, "width, height, :
     }
 }
-*/
