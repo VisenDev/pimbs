@@ -148,6 +148,16 @@ kv_id kv_ecs_new_entity(Allocator a, struct kv_ecs * self)
 ;
 #endif
 
+void kv_ecs_delete_entity(struct kv_ecs * self, kv_id id)
+#ifdef KVECS_IMPLEMENTATION
+{
+    
+
+}
+#else
+;
+#endif
+
     NODISCARD 
 int kv_ecs_set(Allocator a, struct kv_ecs * self, kv_id id, const char * const key, struct kv_value value)
 #ifdef KVECS_IMPLEMENTATION
@@ -183,7 +193,7 @@ struct kv_value * kv_ecs_get(struct kv_ecs * self, kv_id id, const char * const 
 #endif
 
 NODISCARD
-kv_id * kv_ecs_parse_json(Allocator a, struct kv_ecs * self, const char * const json, const unsigned long len)
+kv_id kv_ecs_parse_json(Allocator a, struct kv_ecs * self, const char * const json, const unsigned long len)
 #ifdef KVECS_IMPLEMENTATION
 {
     kv_id_vec push_down_automata = kv_id_vec_init();
@@ -199,3 +209,39 @@ kv_id * kv_ecs_parse_json(Allocator a, struct kv_ecs * self, const char * const 
 #else
 ;
 #endif
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+void ideal_syntax_test(void) {
+
+    Allocator a = libc_allocator();
+    kv_ecs e = kv_ecs_init(a);
+    int err = ERR_NONE;
+    kv_id config = e.new_entity(&e); 
+
+    err = config.set(config, "{\"width\": 1000, \"height\": 1000, \"colors\": { \"red\": 123456 }");
+
+
+    {
+        const long red = config.getl(config, "colors.red");
+    }
+
+    {
+        const kv_id_vec ids = e.get_domain(&e, "width, height, :
+    }
+}
