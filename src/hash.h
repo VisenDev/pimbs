@@ -179,6 +179,7 @@ int CONCAT(HASH_NAME, _delete)(HASH_NAME * self, const char * const key)
     const unsigned long keylen = string_length_fixed(key);
     const unsigned long index = CONCAT(HASH_NAME, _hash)(self, key, keylen);
     const int err = CONCAT(BucketVecSet, _delete)(&self->buckets, index);
+    /*todo fix memory leak here*/
     return err;
 }
 #else

@@ -293,6 +293,12 @@ int main(void) {
         testing_expect(&t, *hashmap_get(&h, "asdf") == 1);
         testing_expect(&t, *hashmap_get(&h, "ASDF") == 2);
         testing_expect(&t, *hashmap_get(&h, "IDGAF") == 3);
+
+        testing_start_test(&t, "hashmap.delete");
+
+        err = hashmap_delete(&h, "asdf");
+        simple_assert(err == ERR_NONE, error_name(err));
+
         hashmap_free(a, &h);
     }
 
