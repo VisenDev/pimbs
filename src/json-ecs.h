@@ -182,6 +182,7 @@ struct kv_value * kv_ecs_get(struct kv_ecs * self, kv_id id, const char * const 
 ;
 #endif
 
+/*
 NODISCARD
 kv_id * kv_ecs_parse_json(Allocator a, struct kv_ecs * self, const char * const json, const unsigned long len)
 #ifdef KVECS_IMPLEMENTATION
@@ -199,3 +200,4 @@ kv_id * kv_ecs_parse_json(Allocator a, struct kv_ecs * self, const char * const 
 #else
 ;
 #endif
+*/
