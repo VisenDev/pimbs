@@ -1,10 +1,5 @@
-#if !defined(ALLOCATOR_H) /* || (defined(ALLOCATOR_IMPLEMENTATION) && !defined(ALLOCATOR_IMPLEMENTED))*/
-
+#ifndef ALLOCATOR_H
 #define ALLOCATOR_H
-
-#ifdef ALLOCATOR_IMPLEMENTATION
-    #define ALLOCATOR_IMPLEMENTED
-#endif /*ALLOCATOR_IMPLEMENTATION*/
 
 #include "attributes.h"
 #include "debug.h"
@@ -16,12 +11,14 @@
 #define DEREF_OR_NULL(ptr) ptr == NULL ? NULL : *ptr
 #define SAFE_DEREF(ptr) (inline_assert(ptr != NULL), *ptr)
 
+/*logging allocation wrappers*/
 #define log_alloc(allocator, byte_count) \
 (LOG_FUNCTION("allocating %lu bytes at %s line %d\n", byte_count, __FILE__, __LINE__), allocator.alloc(allocator, byte_count))
 
 #define log_realloc(allocator, oldmem, byte_count) \
 (LOG_FUNCTION("reallocating %lu bytes at %s line %d\n", byte_count, __FILE__, __LINE__), allocator.realloc(allocator, oldmem, byte_count))
 
+/*types*/
 struct Allocator;
 
 typedef void* (*AllocFn)(struct Allocator,unsigned long);
@@ -38,7 +35,6 @@ typedef struct Allocator {
 
 
 #if defined(USE_STDLIB) && USE_STDLIB == 1
-
 #include "stdlib.h"
 
 /*LIBC*/
