@@ -54,6 +54,8 @@
 
 #include "src/defer.h"
 
+#include "src/bitmap.h"
+
 
 int main(void) {
     TestingState t = testing_init();
@@ -113,6 +115,47 @@ int main(void) {
     if(leak_check_count_leaks(a) != 0) {
         tui_printf1("post kvecs leak count: %d\n", leak_check_count_leaks(a));
         leak_check_print_leaks(a);
+    }
+
+    testing_start_test(&t, "bitmap");
+    {
+        Bitmap(128) bm = {0};
+        unsigned int i = 0;
+        set_bit(bm, 40);
+        testing_expect(&t, get_bit_unsafe(bm, 40));
+
+        for(i = 0; i < 128; ++i) {
+            if(i == 40) {
+                testing_expect(&t, get_bit_unsafe(bm, i));
+            } else {
+                testing_expect(&t, !get_bit_unsafe(bm, i));
+            }
+        }
+    }
+
+    testing_start_test(&t, "bitmap_2d");
+    {
+        Bitmap2D(128, 128) bm = {0};
+        unsigned int x = 0;
+        unsigned int y = 0;
+        int bit = 0;
+
+        set_bit_2d(bm, 40, 40);
+
+        bit = get_bit_2d(bm, 40, 40);
+        testing_expect(&t, bit);
+
+        for(x = 0; x < 128; ++x) {
+            for(y = 0; y < 128; ++y) {
+                if(x == 40 && y == 40) {
+                    bit = get_bit_2d(bm, 40, 40);
+                    testing_expect(&t, bit);
+                } else {
+                    bit = get_bit_2d(bm, 40, 40);
+                    testing_expect(&t, !bit);
+                }
+            }
+        }
     }
 
 
