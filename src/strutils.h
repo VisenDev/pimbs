@@ -9,7 +9,7 @@ typedef struct {
 } String;
 
 NODISCARD 
-static int string_equal(const char * const lhs, const char * const rhs, unsigned long maxlen )
+int string_equal(const char * const lhs, const char * const rhs, unsigned long maxlen )
 {
     unsigned long i = 0;
     for(i = 0; i < maxlen; ++i) {
@@ -29,7 +29,7 @@ static int string_equal(const char * const lhs, const char * const rhs, unsigned
 }
 
 NODISCARD 
-static unsigned long string_length(const char * const str, const unsigned long maxlen)
+unsigned long string_length(const char * const str, const unsigned long maxlen)
 {
     unsigned long i = 0;
     for(i = 0; str[i] != 0 && i < maxlen; ++i);
@@ -38,7 +38,7 @@ static unsigned long string_length(const char * const str, const unsigned long m
 
 
 /* memcpy */
-static void memory_copy(void * dest, const void * const src, const unsigned long byte_count)
+void memory_copy(void * dest, const void * const src, const unsigned long byte_count)
 {
     char * destbuf = dest;
     const char * const srcbuf = src;
@@ -60,17 +60,17 @@ typedef struct {
 } FixedString;
 
 NODISCARD 
-static unsigned long string_length_fixed(const char * const str) {
+unsigned long string_length_fixed(const char * const str) {
     return string_length(str, FIXED_STRING_LEN - 1);
 }
 
 NODISCARD 
-static int string_equal_fixed(const FixedString lhs, const char * const rhs) {
+int string_equal_fixed(const FixedString lhs, const char * const rhs) {
     return string_equal(lhs.str, rhs, lhs.len);
 }
 
 NODISCARD 
-static FixedString fixed_string_init(const char * const str) {
+FixedString fixed_string_init(const char * const str) {
     const unsigned long len = string_length_fixed(str);
     FixedString result = {0};
     result.len = len;

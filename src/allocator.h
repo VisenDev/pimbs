@@ -5,7 +5,6 @@
 #include "debug.h"
 #include "tui.h"
 #include "strutils.h"       
-#include "testing.h"
 
 /* utility macros for dealing with null */
 #define DEREF_OR_NULL(ptr) ptr == NULL ? NULL : *ptr

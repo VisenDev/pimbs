@@ -44,8 +44,10 @@
 #include "src/kvecs.h"
 */
 
+/*
 #define KVECS_IMPLEMENTATION
 #include "src/json-ecs.h"
+*/
 
 #define FORMAT_IMPLEMENTATION
 #include "src/format.h"

@@ -8,7 +8,18 @@
 #define ERR_INDEX_OUT_OF_BOUNDS 2
 #define ERR_NOT_FOUND           3
 
-static char const * error_name(const int error_code) {
+extern const char *const error_names[];
+const char *const error_names[] = {
+    "ERR_NONE",              
+    "ERR_ALLOCATION_FAILURE",
+    "ERR_INDEX_OUT_OF_BOUNDS",
+    "ERR_NOT_FOUND"          
+};
+
+#define error_name(error_code) error_names[error_code]
+
+/*
+char const * error_name(const int error_code) {
     switch(error_code) {
         case ERR_NONE: 
             return "ERR_NONE";
@@ -24,6 +35,7 @@ static char const * error_name(const int error_code) {
 
     return NULL;
 }
+*/
 
 
 #endif /*ERRORS_H*/
