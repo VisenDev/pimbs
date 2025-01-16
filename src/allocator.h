@@ -70,7 +70,7 @@ static void libc_free(struct Allocator self, void * mem)
 ;
 #endif
 
-NODISCARD PURE_FUNCTION
+NODISCARD PURE_FUNCTION UNUSED
 Allocator libc_allocator(void)
 #ifdef ALLOCATOR_IMPLEMENTATION
 {
@@ -138,7 +138,7 @@ static void logging_free(struct Allocator self, void * mem)
 ;
 #endif
 
-NODISCARD PURE_FUNCTION
+NODISCARD PURE_FUNCTION UNUSED
 Allocator logging_allocator(Allocator *child)
 #ifdef ALLOCATOR_IMPLEMENTATION
 {
@@ -233,6 +233,7 @@ static void * leak_check_realloc (struct Allocator self, void * old_mem, unsigne
 ;
 #endif
 
+UNUSED
 static void leak_check_free (struct Allocator self, void * mem)
 #ifdef ALLOCATOR_IMPLEMENTATION
 {
@@ -258,8 +259,8 @@ static void leak_check_free (struct Allocator self, void * mem)
 ;
 #endif
 
-NODISCARD 
-static int leak_check_count_leaks(struct Allocator self)
+NODISCARD UNUSED
+int leak_check_count_leaks(struct Allocator self)
 #ifdef ALLOCATOR_IMPLEMENTATION
 {
     LeakCheckCtx * ctx = self.ctx;
@@ -270,7 +271,7 @@ static int leak_check_count_leaks(struct Allocator self)
 #endif
 
 
-
+UNUSED
 void leak_check_print_leaks(struct Allocator self)
 #ifdef ALLOCATOR_IMPLEMENTATION
 {
@@ -382,7 +383,7 @@ typedef struct {
 } FixedBufferCtx;
 
 
-NODISCARD PURE_FUNCTION
+NODISCARD PURE_FUNCTION UNUSED
 static int is_mem_top(FixedBufferCtx ctx, void * mem)
 #ifdef ALLOCATOR_IMPLEMENTATION
 {
@@ -458,7 +459,7 @@ static void fixed_buffer_free(struct Allocator self, void * mem)
 ;
 #endif
 
-NODISCARD PURE_FUNCTION
+NODISCARD PURE_FUNCTION UNUSED
 Allocator fixed_buffer_allocator(char * buffer, const unsigned long buflen)
 #ifdef ALLOCATOR_IMPLEMENTATION
 {

@@ -40,6 +40,7 @@ TEST_CFLAGS= \
 		-Wno-missing-prototypes \
 		-Wno-unsafe-buffer-usage \
 		-Wno-padded \
+		-Wno-used-but-marked-unused \
 		-Weverything \
 		-Werror \
 		-fsanitize=address \

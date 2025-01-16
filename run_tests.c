@@ -122,13 +122,13 @@ int main(void) {
         Bitmap(128) bm = {0};
         unsigned int i = 0;
         set_bit(bm, 40);
-        testing_expect(&t, get_bit_unsafe(bm, 40));
+        testing_expect(&t, get_bit(bm, 40));
 
         for(i = 0; i < 128; ++i) {
             if(i == 40) {
-                testing_expect(&t, get_bit_unsafe(bm, i));
+                testing_expect(&t, get_bit(bm, i));
             } else {
-                testing_expect(&t, !get_bit_unsafe(bm, i));
+                testing_expect(&t, !get_bit(bm, i));
             }
         }
     }
@@ -148,10 +148,10 @@ int main(void) {
         for(x = 0; x < 128; ++x) {
             for(y = 0; y < 128; ++y) {
                 if(x == 40 && y == 40) {
-                    bit = get_bit_2d(bm, 40, 40);
+                    bit = get_bit_2d(bm, x, y);
                     testing_expect(&t, bit);
                 } else {
-                    bit = get_bit_2d(bm, 40, 40);
+                    bit = get_bit_2d(bm, x, y);
                     testing_expect(&t, !bit);
                 }
             }

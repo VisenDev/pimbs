@@ -14,11 +14,13 @@
     #define LIKELY_TRUE(expr)  __builtin_expect(expr, 1)
     #define LIKELY_FALSE(expr) __builtin_expect(expr, 0)
     #define ABORT() __builtin_trap()
-    #define PURE_FUNCTION __attribute__((const))
+    #define PURE_FUNCTION __attribute__((pure))
+    #define UNUSED __attribute__((unused))
 #else
     #define LIKELY_TRUE(expr) expr
     #define LIKELY_FALSE(expr) expr
     #define PURE_FUNCTION
+    #define UNUSED
     #if USE_STDLIB == 1
         #include <stdlib.h>
         #define ABORT() abort()
@@ -41,6 +43,5 @@
 #ifndef NULL
     #define NULL ((void *)0)
 #endif /*NULL*/
-
 
 #endif /*ATTRIBUTES_H*/
