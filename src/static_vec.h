@@ -24,12 +24,19 @@
     self._tmp)
 #define svec_remove(self, index) ( \
     do { \
-        unsigned long i = 0; \
+        unsigned long svec_i = 0; \
         inline_assert(index >= 0); \
         inline_assert(index < svec_cap(self)); \
-        for(i = index + 1; i < self.len; ++i) {\
-            svec_swap(self, i, i - 1)\
+        for(svec_i = index + 1; svec_i < self.len; ++svec_i) {\
+            svec_swap(self, svec_i, svec_i - 1)\
         } \
         svec_pop(self); \
+    } while (0)
+#define svec_foreach(self, function, ctx) \
+    do { \
+        unsigned long svec_i = 0; \
+        for(svec_i = 0; svec_i < self.len; ++svec_i) { \
+            function(ctx, svec_get(self, svec_i)); \
+        } \
     } while (0)
 
