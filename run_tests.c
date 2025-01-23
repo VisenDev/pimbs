@@ -37,24 +37,9 @@
 #include "src/hash.h"
 
 
-/*
-#define KVECS_TYPE double
-#define KVECS_NAME ecs
-#define KVECS_IMPLEMENTATION
-#include "src/kvecs.h"
-*/
-
-/*
-#define KVECS_IMPLEMENTATION
-#include "src/json-ecs.h"
-*/
-
-#define FORMAT_IMPLEMENTATION
-#include "src/format.h"
-
 #include "src/defer.h"
-
 #include "src/bitmap.h"
+#include "src/static_vec.h"
 
 
 int main(void) {
@@ -67,7 +52,6 @@ int main(void) {
     /*Allocator libc = libc_allocator();*/
     /*Allocator logging = logging_allocator(&fixed);*/
     Allocator a = leak_check_allocator(&fixed);
-    static char fmtbuf[buflen];
 
     defer(cleanup)
     {
@@ -79,43 +63,26 @@ int main(void) {
         leak_check_allocator_free(a);
     }
 
-    testing_start_test(&t, "kvecs");
-    /*{
-        ecs e = ecs_init();
-        int err = ERR_NONE;
-        unsigned int i = 0;
+    testing_start_test(&t, "static_vec");
+    {
+        StaticVec(int, 1024) vec = {0};
+        int i = 0;
 
-
-        for(i = 0; i < 100; ++i) {
-            const Id entity = ecs_new_entity(a, &e);
-            const Id phys = ecs_set_child(a, &e, entity, "physics");
-            const Id vel = ecs_set_child(a, &e, phys, "velocity");
-            const Id acc = ecs_set_child(a, &e, phys, "acceleration");
-
-            testing_expect(&t, entity.index != NULL_ID);
-
-            err = ecs_set(a, &e, vel, "x", 1.0);
-            testing_expect(&t, err == ERR_NONE);
-            err = ecs_set(a, &e, vel, "y", 1.0);
-            testing_expect(&t, err == ERR_NONE);
-
-            err = ecs_set(a, &e, acc, "x", 0.1);
-            testing_expect(&t, err == ERR_NONE);
-            err = ecs_set(a, &e, acc, "y", 0.1);
-            testing_expect(&t, err == ERR_NONE);
-
-            err = ecs_set(a, &e, phys, "friction", 0.01);
-            testing_expect(&t, err == ERR_NONE);
+        for(i = 0; i < 128; ++i) {
+            svec_append(vec, i);
+        }
+        for(i = 0; i < 128; ++i) {
+            testing_expect(&t, svec_get(vec, i) == i);
         }
 
-        ecs_free(a, &e);
-    }*/
-
-
-    if(leak_check_count_leaks(a) != 0) {
-        tui_printf1("post kvecs leak count: %d\n", leak_check_count_leaks(a));
-        leak_check_print_leaks(a);
+        testing_start_test(&t, "static_vec_pop");
+        testing_expect(&t, svec_pop(vec) == 127);
+        testing_expect(&t, svec_pop(vec) == 126);
+        testing_expect(&t, svec_pop(vec) == 125);
+        testing_expect(&t, svec_pop(vec) == 124);
+        testing_expect(&t, vec.len == 124);
     }
+
 
     testing_start_test(&t, "bitmap");
     {
@@ -158,39 +125,6 @@ int main(void) {
         }
     }
 
-
-    testing_start_test(&t, "format_unsigned_long");
-    {
-        {
-            const unsigned long len = format_unsigned_long(fmtbuf, buflen, 1234567890123456789, 10);
-            testing_expect(&t, string_equal(fmtbuf, "1234567890123456789", len));
-        }
-        {
-            const unsigned long len = format_unsigned_long(fmtbuf, buflen, 0xDEADBEEF, 16);
-            testing_expect(&t, string_equal(fmtbuf, "DEADBEEF", len));
-        }
-    }
-
-
-    testing_start_test(&t, "format_double");
-    {
-        {
-            const unsigned long len = format_double(fmtbuf, buflen, 12345.67890, 5);
-            testing_expect(&t, string_equal(fmtbuf, "12345.67890", len));
-        }
-        {
-            const unsigned long len = format_double(fmtbuf, buflen, 12345.67890, 2);
-            testing_expect(&t, string_equal(fmtbuf, "12345.67", len));
-        }
-        {
-            const unsigned long len = format_double(fmtbuf, buflen, 12345.67890, 0);
-            testing_expect(&t, string_equal(fmtbuf, "12345", len));
-        }
-        {
-            const unsigned long len = format_double(fmtbuf, buflen, -12345.67890, 6);
-            testing_expect(&t, string_equal(fmtbuf, "-12345.678900", len));
-        }
-    }
 
 
     if(leak_check_count_leaks(a) != 0) {
