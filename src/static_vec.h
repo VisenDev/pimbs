@@ -34,4 +34,11 @@
         } \
         svec_pop(self); \
     } while (0)
+#define svec_foreach(self, function, ctx) \
+    do { \
+        unsigned long svec_i = 0; \
+        for(svec_i = 0; svec_i < self.len; ++svec_i) { \
+            function(ctx, svec_get(self, svec_i)); \
+        } \
+    } while (0)
 
