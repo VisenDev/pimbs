@@ -12,23 +12,25 @@
     inline_assert(index >= 0), \
     inline_assert(index < svec_cap(self)), \
     self.items[index] = value)
-#define svec_swap(self, index_a, index_b) (\
-    self._tmp = svec_get(self, index_a), \
-    svec_set(self, index_a, svec_get(self, index_b)) \
-    svec_set(self, index_b, self._tmp))
+#define svec_swap(self, index_a, index_b) \
+    do { \
+        self._tmp = svec_get(self, index_a); \
+        svec_set(self, index_a, svec_get(self, index_b)); \
+        svec_set(self, index_b, self._tmp); \
+    } while (0)
 #define svec_top(self) (self.items[self.len - 1])
 #define svec_pop(self) (\
     inline_assert(self.len >= 1),  \
     self._tmp = svec_top(self), \
     self.len -= 1, \
     self._tmp)
-#define svec_remove(self, index) ( \
+#define svec_remove(self, index) \
     do { \
         unsigned long i = 0; \
-        inline_assert(index >= 0); \
-        inline_assert(index < svec_cap(self)); \
+        simple_assert(index >= 0, "negative index"); \
+        simple_assert(index < svec_cap(self), "index out of bounds"); \
         for(i = index + 1; i < self.len; ++i) {\
-            svec_swap(self, i, i - 1)\
+            svec_swap(self, i, i - 1);\
         } \
         svec_pop(self); \
     } while (0)
