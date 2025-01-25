@@ -72,7 +72,8 @@ int main(void) {
             svec_append(vec, i);
         }
         for(i = 0; i < 128; ++i) {
-            testing_expect(&t, svec_get(vec, i) == i);
+            const int elem = svec_get(vec, i);
+            testing_expect(&t, elem == i);
         }
 
         testing_start_test(&t, "static_vec_pop");
