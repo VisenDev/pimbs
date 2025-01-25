@@ -74,25 +74,25 @@ necessary `#define X_IMPLEMENTATION` macros defined when needed)
 
 # Provided modules
 
-- attributes.h : Compiler agnostic common C attributes (such as NORETURN)
-- debug.h : Debugging functions, such as assert
-- tui.h : Colored ansi terminal output, requires a printf compatible `LOG_FUNCTION`
+- 'attributes.h' : Compiler agnostic common C attributes (such as NORETURN)
+- 'debug.h' : Debugging functions, such as assert
+- 'tui.h' : Colored ansi terminal output, requires a printf compatible `LOG_FUNCTION`
     to be defined to get actual output.
-- testing.h : Super simple unit testing setup. See runtests.c for example usage.
-- vec.h : Generic vector data structure
-- list.h : Generic linked list data structure
-- sset.h : Generic sparse set data structure
-- hash.h : Generic hashmap data structure (not fully completed)
-- allocator.h : Zig inspired allocator interface, provides an allocator interface
+- 'testing.h' : Super simple unit testing setup. See runtests.c for example usage.
+- 'vec.h' : Generic vector data structure
+- 'list.h' : Generic linked list data structure
+- 'sset.h' : Generic sparse set data structure
+- 'hash.h' : Generic hashmap data structure (not fully completed)
+- 'allocator.h' : Zig inspired allocator interface, provides an allocator interface
     and several common allocators, such as a leak-checking allocator, a logging
     allocator, an always failing allocator, a fixed buffer allocator, and an
     (optional) libc allocator (if desired)
-- defer.h : Super simple defer mechanism for C
-- concat.h : provides the common `CONCAT` macro
-- bitmap.h : Macros to create simple fixed sized bitmaps
-- svec.h : Macros to create simple generic fixed sized vectors
-- strutils.h : Provides several common string operation functions
-- errors.h : Defines standard error codes and their meanings when used in pimbs
+- 'defer.h' : Super simple defer mechanism for C
+- 'concat.h' : provides the common `CONCAT` macro
+- 'bitmap.h' : Macros to create simple fixed sized bitmaps
+- 'svec.h' : Macros to create simple generic fixed sized vectors
+- 'strutils.h' : Provides several common string operation functions
+- 'errors.h' : Defines standard error codes and their meanings when used in pimbs
 
 There are also some experimental things I am working on in the `wip` directory. 
 Like an ecs and various types of config file parsers.
