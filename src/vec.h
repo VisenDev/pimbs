@@ -86,7 +86,7 @@ NODISCARD
 int CONCAT(VEC_NAME, _append) (Allocator a, VEC_NAME * self, VEC_TYPE value)
 #ifdef VEC_IMPLEMENTATION
 {
-    simple_assert(self != NULL, "self is NULL");
+    debug_assert((long)self, !=, (long)NULL);
     if(self->len >= self->cap) {
         const int err = CONCAT(VEC_NAME, _ensure_capacity)(a, self, (1 + self->cap) * 2);
         if(err != ERR_NONE) {
@@ -96,11 +96,11 @@ int CONCAT(VEC_NAME, _append) (Allocator a, VEC_NAME * self, VEC_TYPE value)
         }
     } else {
         unsigned long index = 0;
-        simple_assert(self->items != NULL, "self.items is not NULL");
+        debug_assert((long)self->items, !=, (long)NULL);
 
         self->len += 1;
         index = self->len - 1;
-        simple_assert(index < self->cap, "index is valid");
+        debug_assert((long)index, <, (long)self->cap);
         memory_copy(&self->items[index], &value, sizeof(VEC_TYPE));
         /*self->items[index] = value;*/
         return ERR_NONE;

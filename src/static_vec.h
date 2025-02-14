@@ -1,20 +1,20 @@
 #include "debug.h"
 
-#define StaticVec(T, cap) struct {T items[cap]; unsigned long len; T _tmp; }
+#define StaticVec(T, cap) struct {T items[cap]; long len; T _tmp; }
 
-#define svec_cap(self) (unsigned long)(sizeof(self.items) / sizeof(self.items[0]))
+#define svec_cap(self) (long)(sizeof(self.items) / sizeof(self.items[0]))
 
 #define svec_append(self, value) do { self.len += 1; svec_set(self, self.len - 1, value); } while (0) 
 
 #define svec_get(self, index) ( \
     inline_assert(index >= 0), \
-    inline_assert((unsigned long)index < svec_cap(self)), \
+    inline_assert((long)index < svec_cap(self)), \
     self.items[index])
 
 #define svec_set(self, index, value) \
     do { \
-        simple_assert(index >= 0, "index is negative"); \
-        simple_assert(index < svec_cap(self), "index is out of bounds"); \
+        debug_assert((long)index, >=, 0); \
+        debug_assert((long)index, <, (long)svec_cap(self)); \
         self.items[index] = value; \
     } while (0) 
 
@@ -35,9 +35,9 @@
 
 #define svec_remove(self, index) \
     do { \
-        unsigned long i = 0; \
-        simple_assert(index >= 0, "negative index"); \
-        simple_assert(index < svec_cap(self), "index out of bounds"); \
+        long i = 0; \
+        debug_assert((long)index, >=, 0); \
+        debug_assert((long)index, <, (long)svec_cap(self)); \
         for(i = index + 1; i < self.len; ++i) {\
             svec_swap(self, i, i - 1);\
         } \
@@ -46,7 +46,7 @@
 
 #define svec_foreach(self, function, ctx) \
     do { \
-        unsigned long svec_i = 0; \
+        long svec_i = 0; \
         for(svec_i = 0; svec_i < self.len; ++svec_i) { \
             function(ctx, svec_get(self, svec_i)); \
         } \

@@ -16,7 +16,7 @@
 UNUSED
 static int get_bit_internal(unsigned char bits[], unsigned long num_bytes, unsigned long bit) {
     const unsigned long max_bit = num_bytes * CHAR_BIT;
-    simple_assert(bit < max_bit, "bit is too big");
+    debug_assert((long)bit, <, (long)max_bit);
     return !!(bits[word_offset(bit)] & (1 << bit_offset(bit)));
 }
 
@@ -27,7 +27,7 @@ UNUSED
 static void set_bit_internal(unsigned char bits[], unsigned long num_bytes, unsigned long bit, int boolean) {
     const unsigned long max_bit = num_bytes * CHAR_BIT;
     const int true_or_false = !!boolean;
-    simple_assert(bit < max_bit, "bit is too big");
+    debug_assert((long)bit, <, (long)max_bit);
     bits[word_offset(bit)] |= (true_or_false << bit_offset(bit));
 }
 

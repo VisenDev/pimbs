@@ -1,5 +1,8 @@
-/*#include <stdio.h>
-#define LOG_FUNCTION printf*/
+#include <stdio.h>
+#define PUTCHAR_FUNCTION putchar
+
+#define FORMAT_IMPLEMENTATION
+#include "src/format.h"
 
 #define TUI_IMPLEMENTATION
 #include "src/tui.h"
@@ -41,6 +44,8 @@
 #include "src/bitmap.h"
 #include "src/static_vec.h"
 
+/*temporary
+ * TODO remove*/
 
 int main(void) {
     TestingState t = testing_init();
@@ -57,7 +62,9 @@ int main(void) {
     {
 
         if(leak_check_count_leaks(a) != 0) {
-            tui_printf1("leak count: %d\n", leak_check_count_leaks(a));
+            tui_put_str("leak count: ");
+            tui_put_long((long) leak_check_count_leaks(a));
+            tui_put_str("\n");
         }
         testing_deinit(&t);
         leak_check_allocator_free(a);
@@ -129,7 +136,9 @@ int main(void) {
 
 
     if(leak_check_count_leaks(a) != 0) {
-        tui_printf1("post fmt leak count: %d\n", leak_check_count_leaks(a));
+        tui_put_str("leak count: ");
+        tui_put_long((long) leak_check_count_leaks(a));
+        tui_put_str("\n");
     }
 
 
@@ -171,7 +180,9 @@ int main(void) {
 
 
     if(leak_check_count_leaks(a) != 0) {
-        tui_printf1("vec tests leak count: %d\n", leak_check_count_leaks(a));
+        tui_put_str("leak count: ");
+        tui_put_long((long) leak_check_count_leaks(a));
+        tui_put_str("\n");
     }
 
 
@@ -197,7 +208,9 @@ int main(void) {
 
 
     if(leak_check_count_leaks(a) != 0) {
-        tui_printf1("list tests leak count: %d\n", leak_check_count_leaks(a));
+        tui_put_str("leak count: ");
+        tui_put_long((long) leak_check_count_leaks(a));
+        tui_put_str("\n");
     }
 
 
@@ -252,7 +265,9 @@ int main(void) {
 
 
     if(leak_check_count_leaks(a) != 0) {
-        tui_printf1("sset tests leak count: %d\n", leak_check_count_leaks(a));
+        tui_put_str("leak count: ");
+        tui_put_long((long) leak_check_count_leaks(a));
+        tui_put_str("\n");
     }
 
 

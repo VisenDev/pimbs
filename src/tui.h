@@ -6,6 +6,7 @@
 #endif
 
 #include "attributes.h"
+#include "format.h"
 
 #define TUI_RED     "\x1b[31m"
 #define TUI_GREEN   "\x1b[32m"
@@ -15,33 +16,56 @@
 #define TUI_CYAN    "\x1b[36m"
 #define TUI_RESET   "\x1b[0m"
 
-#ifndef LOG_FUNCTION
-    #if defined(USE_STDLIB) && USE_STDLIB == 1
-        #include <stdio.h>
-        #define LOG_FUNCTION printf
-    #else
-        static int dummy_log_function(const char * format, ...) {
-            (void)format;
-            return 0;
-        }
-        #define LOG_FUNCTION dummy_log_function
-    #endif /*USE_STDLIB*/
-#endif /*LOG_FUNCTION*/
+/*Note, a putc function must be defined in order to use the tui module*/
+#ifndef PUTCHAR_FUNCTION
+#    error "PUTCHAR_FUNCTION must be defined"
+#endif /*PUTC_FUNCTION*/
 
+static int tui_put_char(char ch) {
+    PUTCHAR_FUNCTION(ch);
+    return 1;
+}
 
-/* C89 doesn't have variadic macros :( */
-#define tui_printf(fmt)                 do {LOG_FUNCTION(fmt);                LOG_FUNCTION(TUI_RESET);} while(0)
-#define tui_printf1(fmt, a)             do {LOG_FUNCTION(fmt, a);             LOG_FUNCTION(TUI_RESET);} while(0)
-#define tui_printf2(fmt, a, b)          do {LOG_FUNCTION(fmt, a, b);          LOG_FUNCTION(TUI_RESET);} while(0)
-#define tui_printf3(fmt, a, b, c)       do {LOG_FUNCTION(fmt, a, b, c);       LOG_FUNCTION(TUI_RESET);} while(0)
-#define tui_printf4(fmt, a, b, c, d)    do {LOG_FUNCTION(fmt, a, b, c, d);    LOG_FUNCTION(TUI_RESET);} while(0)
-#define tui_printf5(fmt, a, b, c, d, e) do {LOG_FUNCTION(fmt, a, b, c, d, e); LOG_FUNCTION(TUI_RESET);} while(0)
+static int tui_put_str(const char * const str) {
+    int i = 0;
+    while(str[i] != 0) {
+        tui_put_char(str[i]);
+        ++i;
+    }
+    return i;
+}
 
+int tui_put_long(long num)
+#ifdef TUI_IMPLEMENTATION
+{
+    char buf[128] = {0};
+    format_long(buf, sizeof(buf), num, 10);
+    return tui_put_str(buf);
+}
+#else
+;
+#endif
 
-/*TODO:
- * define all ansi escape codes
- * implement print function
- */
+int tui_put_double(double num)
+#ifdef TUI_IMPLEMENTATION
+{
+    char buf[128] = {0};
+    format_double(buf, sizeof(buf), num, 10);
+    return tui_put_str(buf);
+}
+#else
+;
+#endif
 
+int tui_put_str_reset(const char * const str) 
+#ifdef TUI_IMPLEMENTATION
+{
+    const int chars = tui_put_str(str); 
+    tui_put_str(TUI_RESET);
+    return chars;
+}
+#else
+;
+#endif
 
 #endif /*TUI_H*/

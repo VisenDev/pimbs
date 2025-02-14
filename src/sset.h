@@ -107,7 +107,7 @@ SSET_TYPE * CONCAT(SSET_NAME, _get)(SSET_NAME * self, const unsigned long index)
         return NULL;
     }
 
-    simple_assert((unsigned long)dense_index < self->dense.len, "Stored dense index is invalid");
+    debug_assert((long)dense_index, <, (long)self->dense.len);
     return &self->dense.items[dense_index];
 }
 #else
@@ -127,14 +127,14 @@ int CONCAT(SSET_NAME, _put)(Allocator a, SSET_NAME * self, unsigned long index, 
     if(index >= self->sparse.len) {
         err = CONCAT(SSET_NAME, _expand_sparse)(a, self, index + 1);
         if (err != ERR_NONE) {
-            log_location();
-            tui_printf2("Putting sparse set index %lu failed because %s\n", index, error_name(err));
+            debug_log_location();
+            /*tui_printf2("Putting sparse set index %lu failed because %s\n", index, error_name(err));*/
             return err;
         }
     }
 
     /*assert bounds check*/
-    debug_assert(unsigned_long, index, <, self->sparse.len);
+    debug_assert((long)index, <, (long)self->sparse.len);
 
     dense_index = self->sparse.items[index];
 
@@ -142,25 +142,25 @@ int CONCAT(SSET_NAME, _put)(Allocator a, SSET_NAME * self, unsigned long index, 
         /*append new*/
         err = CONCAT(Dense, _append)(a, &self->dense, value);
         if(err != ERR_NONE) {
-            log_location();
-            tui_printf2("Putting sparse set index %lu failed because %s\n", index, error_name(err));
+            debug_log_location();
+            /*tui_printf2("Putting sparse set index %lu failed because %s\n", index, error_name(err));*/
             return err;
         }
         err = CONCAT(DenseToSparse, _append)(a, &self->dense_to_sparse, index);
         if(err != ERR_NONE) {
-            log_location();
-            tui_printf2("Putting sparse set index %lu failed because %s\n", index, error_name(err));
+            debug_log_location();
+            /*tui_printf2("Putting sparse set index %lu failed because %s\n", index, error_name(err));*/
             return err;
         }
         /*update sparse*/
         self->sparse.items[index] = (long)self->dense.len - 1;
     } else {
         /*replace existing*/
-        tui_printf2("sset put replacing existing value at dense index %ld and normal index %lu\n", dense_index, index);
+        /*tui_printf2("sset put replacing existing value at dense index %ld and normal index %lu\n", dense_index, index);*/
         self->dense.items[dense_index] = value;
     }
 
-    simple_assert(CONCAT(SSET_NAME, _get)(self, index) != NULL, "index that was just put should not be null");
+    debug_assert((long)(CONCAT(SSET_NAME, _get)(self, index)), !=, (long)NULL);
     return ERR_NONE;
 }
 #else 
@@ -221,12 +221,12 @@ SSET_TYPE * CONCAT(SSET_NAME, _get_or_put)(Allocator a, SSET_NAME * self, const 
     if(found == NULL) {
         int err = CONCAT(SSET_NAME, _put)(a, self, index, fallback_value);
         if(err != ERR_NONE) {
-            log_location();
-            tui_printf2("get or set sparse set index %lu failed because %s\n", index, error_name(err));
+            debug_log_location();
+            /*tui_printf2("get or set sparse set index %lu failed because %s\n", index, error_name(err));*/
             return NULL;
         } 
         found = CONCAT(SSET_NAME, _get)(self, index);
-        simple_assert(found != NULL, "found should not be null once it has been set");
+        debug_assert((long)found, !=, (long)NULL);
         return found;
     } else {
         return found;

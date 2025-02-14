@@ -151,7 +151,9 @@ int CONCAT(HASH_NAME, _put)(Allocator a, HASH_NAME * self, const char * const ke
         const unsigned long index = CONCAT(HASH_NAME, _hash)(self, key, keylen);
         BucketVec * bucketvec = CONCAT(BucketVecSet, _get_or_put)(a, &self->buckets, index, CONCAT(BucketVec, _init)());
         if(bucketvec == NULL) {
-            tui_printf1("BucketVec for key %s failed to allocate", key);
+            tui_put_str("BucketVec for key ");
+            tui_put_str(key);
+            tui_put_str(" failed to allocate\n");
             return ERR_ALLOCATION_FAILURE;
         } else {
             /*append new key_value pair into vec*/
@@ -197,12 +199,12 @@ HASH_TYPE * CONCAT(HASH_NAME, _get_or_put)(Allocator a, HASH_NAME * self, const 
         const unsigned long index = CONCAT(HASH_NAME, _hash)(self, key, keylen);*/
         int err = CONCAT(HASH_NAME, _put)(a, self, key, fallback_value);
         if(err != ERR_NONE) {
-            log_location();
+            debug_log_location();
             /*tui_printf2("get or set sparse set index %lu failed because %s\n", index, error_name(err));*/
             return NULL;
         } 
         found = CONCAT(HASH_NAME, _get)(self, key);
-        simple_assert(found != NULL, "found should not be null once it has been set");
+        debug_assert((long)found, !=, (long)NULL);
         return found;
     } else {
         return found;

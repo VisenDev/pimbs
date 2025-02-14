@@ -4,63 +4,82 @@
 #include "tui.h"
 #include "attributes.h"
 
+static int log_location_internal(const char * file, const long line) {
+    return
+    tui_put_str("   FILE: ") +
+    tui_put_str(file) +
+    tui_put_str("\n    LINE: ") +
+    tui_put_long(line) +
+    tui_put_str("\n\n");
+}
 
-#define int_specifier "%d"
-#define unsigned_int_specifier "%u"
-#define short_specifier "%hd"
-#define unsigned_short_specifier "%hu"
-#define long_specifier "%ld"
-#define unsigned_long_specifier "%lu"
-#define long_long_specifier "%lld"
-#define unsigned_long_long_specifier "%llu"
-#define float_specifier "%f"
-#define double_specifier "%f"
-#define char_specifier "%c"
-#define unsigned_char_specifier "%hhu"
-#define signed_char_specifier "%hhd"
-#define char_pointer_specifier "%s"
-#define void_pointer_specifier "%p"
-#define int8_t_specifier "%hhd"
-#define uint8_t_specifier "%hhu"
-#define int16_t_specifier "%hd"
-#define uint16_t_specifier "%hu"
-#define int32_t_specifier "%d"
-#define uint32_t_specifier "%u"
-#define int64_t_specifier "%lld"
-#define uint64_t_specifier "%llu"
-#define size_t_specifier "%zu"
-#define ptrdiff_t_specifier "%td"
+#define debug_log_location() log_location_internal(__FILE__, __LINE__)
 
+static void debug_assert_internal(
+        const int condition,
+        const char * lhs_str,
+        const char * rhs_str,
+        const char * operator_str,
+        const long lhs,
+        const long rhs,
+        const char * file,
+        const int line
+        ) {
+    if(LIKELY_FALSE(!condition)) {
+        {
+            tui_put_str(TUI_RED"\nASSERTION FAILURE: ");
+            tui_put_str(lhs_str);
+            tui_put_str(" ");
+            tui_put_str(operator_str);
+            tui_put_str(" ");
+            tui_put_str(rhs_str);
+            tui_put_str("\n");
+        }
 
-#define log_location() LOG_FUNCTION("   File: %s, Line: %d\n", __FILE__, __LINE__)
-       
-#define debug_assert(type, lhs, operator, rhs) \
+        {
+            tui_put_str(TUI_YELLOW"   expression \"");
+            tui_put_str(lhs_str);
+            tui_put_str("\" expands to ");
+            tui_put_long(lhs);
+            tui_put_str("\n");
+        }
+
+        {
+            tui_put_str(TUI_YELLOW"   expression \"");
+            tui_put_str(rhs_str);
+            tui_put_str("\" expands to ");
+            tui_put_long(rhs);
+            tui_put_str_reset("\n");
+        }
+
+        {
+            tui_put_str("   FILE: ");
+            tui_put_str(file);
+            tui_put_str("\n    LINE: ");
+            tui_put_long(line);
+            tui_put_str("\n\n");
+        }
+
+        tui_put_str_reset(TUI_RED   "   ABORTING...\n\n"); \
+        ABORT();
+
+    }
+}
+
+#define simple_assert(condition, msg) \
     do { \
-        if(LIKELY_FALSE(!((lhs) operator (rhs)))) { \
-            tui_printf3(TUI_RED   "\nASSERTION FAILURE: %s %s %s\n", #lhs, #operator, #rhs); \
-            tui_printf2(TUI_YELLOW"   lhs expression %s expands to " type ## _specifier "\n", #lhs, lhs); \
-            tui_printf2(TUI_YELLOW"   rhs expression %s expands to " type ## _specifier "\n", #rhs, rhs); \
-            log_location(); \
-            tui_printf(TUI_RED   "   ABORTING...\n\n"); \
+        if(LIKELY_FALSE(!(condition))) { \
+            tui_put_str_reset(TUI_RED "\nASSERTION FAILED\n"); \
+            tui_put_str(msg); \
+            tui_put_str("\n"); \
             ABORT(); \
         } \
-    } while (0)
+    } while (0) \
 
-#define simple_assert(expression, message) \
-    do { \
-        const int condition = expression; \
-        if(LIKELY_FALSE(!condition)) { \
-            tui_printf1(TUI_RED   "\nASSERTION FAILURE: %s\n", #expression); \
-            tui_printf1(TUI_YELLOW"   %s\n", message); \
-            log_location(); \
-            tui_printf(TUI_RED   "   ABORTING...\n\n"); \
-            ABORT(); \
-        } \
-    } while (0)
+#define debug_assert(lhs, operator, rhs) \
+    debug_assert_internal((lhs operator rhs), #lhs, #operator, #rhs, lhs, rhs, __FILE__, __LINE__)
 
 #define inline_assert(expression) \
-    LIKELY_TRUE(expression) ? (void)0 : (void)(log_location(), ABORT())
-
-
+    LIKELY_TRUE(expression) ? (void)0 : (void)(debug_log_location(), ABORT())
 
 #endif /*DEBUG_H*/

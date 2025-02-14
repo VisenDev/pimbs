@@ -66,6 +66,11 @@ portable:
 	$(COSMOCC) -DUSE_STDLIB=1 $(TESTFILE) $(CFLAGS) -Werror -fno-sanitize=address -fno-sanitize=undefined -o $(TESTEXE) 
 	./$(TESTEXE)
 
+tcc:
+	@mkdir -p $(BUILDDIR)
+	tcc -DUSE_STDLIB=1 $(TESTFILE) $(CFLAGS) -Werror -fno-sanitize=address -fno-sanitize=undefined -o $(TESTEXE) 
+	./$(TESTEXE)
+
 # Clean rule
 .PHONY: clean
 clean: 

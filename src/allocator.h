@@ -11,11 +11,13 @@
 #define SAFE_DEREF(ptr) (inline_assert(ptr != NULL), *ptr)
 
 /*logging allocation wrappers*/
+/*
 #define log_alloc(allocator, byte_count) \
 (LOG_FUNCTION("allocating %lu bytes at %s line %d\n", byte_count, __FILE__, __LINE__), allocator.alloc(allocator, byte_count))
 
 #define log_realloc(allocator, oldmem, byte_count) \
 (LOG_FUNCTION("reallocating %lu bytes at %s line %d\n", byte_count, __FILE__, __LINE__), allocator.realloc(allocator, oldmem, byte_count))
+*/
 
 /*types*/
 struct Allocator;
@@ -91,6 +93,7 @@ Allocator libc_allocator(void)
 
 /*LOGGING*/
 
+/*
 NODISCARD 
 static void* logging_alloc (struct Allocator self, unsigned long byte_count)
 #ifdef ALLOCATOR_IMPLEMENTATION
@@ -154,6 +157,7 @@ Allocator logging_allocator(Allocator *child)
 #else
 ;
 #endif
+*/
 
 
 /*ARENA*/
@@ -218,7 +222,7 @@ static void * leak_check_realloc (struct Allocator self, void * old_mem, unsigne
         }
     }
 
-    simple_assert(old != NULL, "old_mem pointer was not found");
+    debug_assert((long)old, != ,(long)NULL);
 
     new_mem = ctx->child->realloc(*ctx->child, old_mem, new_byte_count);
     if(new_mem == NULL) {
@@ -248,11 +252,11 @@ static void leak_check_free (struct Allocator self, void * mem)
             break;    
         }
     }
-    simple_assert(index != -1 , "mem pointer was not found");
+    debug_assert(index, !=, -1);
     ctx->child->free(*ctx->child, mem);
 
     err = AllocRecords_swap(&ctx->alloc_records, (unsigned long) index, ctx->alloc_records.len - 1);
-    simple_assert(err == ERR_NONE, "Indexes for swap are incorrect");
+    debug_assert(err, ==, ERR_NONE);
     ctx->alloc_records.len -= 1;
 }
 #else
@@ -279,7 +283,11 @@ void leak_check_print_leaks(struct Allocator self)
     unsigned long i = 0;
     for(i = 0; i < ctx->alloc_records.len; ++i) {
         const Allocation alloc = ctx->alloc_records.items[i];
-        tui_printf2("leaked address %p containing %lu bytes\n", alloc.ptr, alloc.byte_count);
+        tui_put_str("Leaked address \"");
+        tui_put_long((long)alloc.ptr);
+        tui_put_str("\" containing ");
+        tui_put_long((long)alloc.byte_count);
+        tui_put_str(" bytes\n");
     }
 }
 #else
@@ -466,7 +474,7 @@ Allocator fixed_buffer_allocator(char * buffer, const unsigned long buflen)
     void * buf = buffer;
     FixedBufferCtx * ctx = (FixedBufferCtx*)buf;
     Allocator result = {0};
-    simple_assert(buflen >= 64, "buffer too small");
+    debug_assert((long)buflen, >=, 64);
     ctx->buf = buffer + sizeof(FixedBufferCtx);
     ctx->end = buffer + buflen;
     ctx->i = 0;

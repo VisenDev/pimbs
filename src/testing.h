@@ -8,6 +8,7 @@
 
 #include "tui.h"
 #include "strutils.h"
+#include "debug.h"
 
 typedef struct {
    const char* name;
@@ -39,13 +40,13 @@ static void testing_print_header(const char * str)
     unsigned int i = 0;
 
     for(i = 0; i < pre_padding; ++i) {
-        tui_printf("=");
+        tui_put_str("=");
     }
-    tui_printf1("%s", str);
+    tui_put_str(str);
     for(i = 0; i < post_padding; ++i) {
-        tui_printf("=");
+        tui_put_str("=");
     }
-    tui_printf("\n");
+    tui_put_str("\n");
 }
 #else
 ;
@@ -55,8 +56,12 @@ static void testing_print_summary(const TestingTracker tracker)
 #ifdef TESTING_IMPLEMENTATION
 {
     testing_print_header(tracker.name);
-    tui_printf1(TUI_GREEN"PASSED: %i\n",  tracker.passed);
-    tui_printf1(TUI_RED"FAILED: %i\n", tracker.failed);
+    tui_put_str_reset(TUI_GREEN"PASSED: ");
+    tui_put_long(tracker.passed);
+    tui_put_str("\n");
+    tui_put_str_reset(TUI_RED"FAILED: ");
+    tui_put_long(tracker.failed);
+    tui_put_str("\n");
     testing_print_header("");
 }
 #else
@@ -86,9 +91,9 @@ static void testing_update_overall(TestingState * state)
 
     if(state->active.name != NULL) {
         if(state->active.failed != 0) {
-            tui_printf(TUI_RED  "[failed...]\n"); 
+            tui_put_str_reset(TUI_RED  "[failed...]\n"); 
         } else {
-            tui_printf(TUI_GREEN"[completed]\n"); 
+            tui_put_str_reset(TUI_GREEN"[completed]\n"); 
         }
         state->overall.passed += state->active.passed;
         state->overall.failed += state->active.failed;
@@ -124,10 +129,10 @@ static void testing_start_test(TestingState * state, const char* test_name)
 
     /*print padding*/
     {
-        const int characters = LOG_FUNCTION("testing.%s...", state->active.name); 
+        const int characters = tui_put_str("testing.") + tui_put_str(state->active.name) + tui_put_str("..."); 
         int i = 0;
         for(i = 0; i < 40 - characters; ++i) {
-            tui_printf(" ");
+            tui_put_str(" ");
         }
     }
 }
@@ -142,14 +147,14 @@ static void testing_expect_internal(TestingState * state, const int condition, c
     if(condition) {
         state->active.passed += 1;
     } else {
-        tui_printf("\n");
-        LOG_FUNCTION(TUI_RED);
+        tui_put_str("\n");
+        tui_put_str(TUI_RED);
         {
-            const int characters = LOG_FUNCTION("   -> %s:%i", file , line); 
+            const int characters = debug_log_location();
             int i = 0;
-            LOG_FUNCTION(TUI_RESET);
+            tui_put_str(TUI_RESET);
             for(i = 0; i < 40 - characters; ++i) {
-                tui_printf(" ");
+                tui_put_str(" ");
             }
             state->active.failed += 1;
         }
