@@ -35,7 +35,7 @@ typedef struct Allocator {
 
 
 
-#if defined(USE_STDLIB) && USE_STDLIB == 1
+#ifndef NO_STDLIB
 #include "stdlib.h"
 
 /*LIBC*/
@@ -88,7 +88,7 @@ Allocator libc_allocator(void)
 ;
 #endif
 
-#endif /*USE_CSTDLIB*/
+#endif /*NO_STDLIB*/
 
 
 /*LOGGING*/

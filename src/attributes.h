@@ -21,7 +21,7 @@
     #define LIKELY_FALSE(expr) expr
     #define PURE_FUNCTION
     #define UNUSED
-    #if USE_STDLIB == 1
+    #ifndef NO_STDLIB
         #include <stdlib.h>
         #define ABORT() abort()
     #else 

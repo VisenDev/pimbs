@@ -1,5 +1,9 @@
-#include <stdio.h>
-#define PUTCHAR_FUNCTION putchar
+#ifndef NO_STDLIB
+    #include <stdio.h>
+    #define PUTCHAR_FUNCTION putchar
+#else
+    #include "src/minilibc.c"
+#endif
 
 #define FORMAT_IMPLEMENTATION
 #include "src/format.h"

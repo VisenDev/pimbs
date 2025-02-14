@@ -1,12 +1,18 @@
 CLANG=clang
+TCC=tcc
+GCC=gcc-14
 COSMOCC=~/c/cosmocc/bin/cosmocc
 SRCDIR=src
 BUILDDIR=build
 TESTFILE=run_tests.c
 TESTEXE=$(BUILDDIR)/test
-CFLAGS =-std=c89 \
-		-pedantic \
+
+CFLAGS= -std=c89 \
 		-g \
+		-Werror
+
+WARNING_FLAGS= \
+		-pedantic \
 		-Wextra \
 		-Wall \
 		-Wfloat-equal \
@@ -35,40 +41,57 @@ CFLAGS =-std=c89 \
 		-Wredundant-decls \
 		-Wnested-externs \
 		-Wmissing-include-dirs 
-TEST_CFLAGS= \
-		$(CFLAGS) \
-		-Wno-missing-prototypes \
+
+DEBUGGING_FLAGS= \
+		-fsanitize=address \
+		-fsanitize=undefined \
+
+CLANG_FLAGS= -ferror-limit=1 
+
+GCC_FLAGS= -fmax-errors=1
+
+FREESTANDING_FLAGS= \
+		-ffreestanding \
+		-nostdlib \
+        -fno-stack-protector \
+		-static \
+		-DNO_STDLIB
+
+
+
+		#-Wno-missing-prototypes \
 		-Wno-unsafe-buffer-usage \
 		-Wno-padded \
 		-Wno-used-but-marked-unused \
 		-Weverything \
-		-Werror \
-		-fsanitize=address \
-		-fsanitize=undefined \
-		-ferror-limit=1 
+# -nostartfiles \
+		-e _main \
 
+#-DUSE_STDLIB=1 
 
-
-
-test: $(TESTFILE) $(SRCDIR)/*h 
+test: #$(TESTFILE) $(SRCDIR)/*h 
 	@mkdir -p $(BUILDDIR)
-	$(CLANG) -DUSE_STDLIB=1 $(TESTFILE) $(TEST_CFLAGS) -o $(TESTEXE)
+	$(CLANG) $(TESTFILE) $(CFLAGS) $(WARNING_FLAGS) $(CLANG_FLAGS) $(DEBUGGING_FLAGS) -o $(TESTEXE)
 	./$(TESTEXE)
 
-nostdlib: $(TESTFILE) $(SRCDIR)/*h 
+nostdlib: #$(TESTFILE) $(SRCDIR)/*h 
 	@mkdir -p $(BUILDDIR)
-	$(CLANG) -DUSE_STDLIB=0 $(TESTFILE) $(CFLAGS) -nostdlib -lSystem -o $(TESTEXE) 
+	$(CLANG) $(TESTFILE) $(CFLAGS) $(FREESTANDING_FLAGS) -e __start -o $(TESTEXE) 
 	./$(TESTEXE)
 
-# Rule to build and run tests
 portable: 
 	@mkdir -p $(BUILDDIR)
-	$(COSMOCC) -DUSE_STDLIB=1 $(TESTFILE) $(CFLAGS) -Werror -fno-sanitize=address -fno-sanitize=undefined -o $(TESTEXE) 
+	$(COSMOCC) $(TESTFILE) $(CFLAGS) $(WARNING_FLAGS) -o $(TESTEXE) 
 	./$(TESTEXE)
 
 tcc:
 	@mkdir -p $(BUILDDIR)
-	tcc -DUSE_STDLIB=1 $(TESTFILE) $(CFLAGS) -Werror -fno-sanitize=address -fno-sanitize=undefined -o $(TESTEXE) 
+	$(TCC) $(CFLAGS) $(WARNING_FLAGS) $(TESTFILE) -o $(TESTEXE) 
+	./$(TESTEXE)
+
+linux:
+	@mkdir -p $(BUILDDIR)
+	$(CLANG) $(TESTFILE) $(CFLAGS) $(FREESTANDING_FLAGS) -o $(TESTEXE) --target=x86_64-freestanding-linux -fuse-ld=lld
 	./$(TESTEXE)
 
 # Clean rule
