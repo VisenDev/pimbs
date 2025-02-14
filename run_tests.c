@@ -48,6 +48,8 @@
 #include "src/bitmap.h"
 #include "src/static_vec.h"
 
+#include "src/dynvec.h"
+
 /*temporary
  * TODO remove*/
 
@@ -74,25 +76,52 @@ int main(void) {
         leak_check_allocator_free(a);
     }
 
-    testing_start_test(&t, "static_vec");
+
+    testing_start_test(&t, "dynvec");
     {
-        StaticVec(int, 1024) vec = {0};
+        DynVec(int) myvec = {0};
         int i = 0;
+        defer(dynvec_free) {
+            dvec_free(myvec);
+        }
 
         for(i = 0; i < 128; ++i) {
-            svec_append(vec, i);
+            dvec_push(myvec, i);
         }
         for(i = 0; i < 128; ++i) {
-            const int elem = svec_get(vec, i);
+            const int elem = dvec_get(myvec, i);
             testing_expect(&t, elem == i);
         }
 
         testing_start_test(&t, "static_vec_pop");
-        testing_expect(&t, svec_pop(vec) == 127);
-        testing_expect(&t, svec_pop(vec) == 126);
-        testing_expect(&t, svec_pop(vec) == 125);
-        testing_expect(&t, svec_pop(vec) == 124);
-        testing_expect(&t, vec.len == 124);
+        testing_expect(&t, dvec_pop(myvec) == 127);
+        testing_expect(&t, dvec_pop(myvec) == 126);
+        testing_expect(&t, dvec_pop(myvec) == 125);
+        testing_expect(&t, dvec_pop(myvec) == 124);
+        testing_expect(&t, myvec.len == 124);
+        
+        deferred(dynvec_free);
+    }
+
+    testing_start_test(&t, "static_vec");
+    {
+        StaticVec(int, 1024) myvec = {0};
+        int i = 0;
+
+        for(i = 0; i < 128; ++i) {
+            svec_append(myvec, i);
+        }
+        for(i = 0; i < 128; ++i) {
+            const int elem = svec_get(myvec, i);
+            testing_expect(&t, elem == i);
+        }
+
+        testing_start_test(&t, "static_vec_pop");
+        testing_expect(&t, svec_pop(myvec) == 127);
+        testing_expect(&t, svec_pop(myvec) == 126);
+        testing_expect(&t, svec_pop(myvec) == 125);
+        testing_expect(&t, svec_pop(myvec) == 124);
+        testing_expect(&t, myvec.len == 124);
     }
 
 
