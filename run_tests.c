@@ -82,22 +82,22 @@ int main(void) {
         DynVec(int) myvec = {0};
         int i = 0;
         defer(dynvec_free) {
-            dvec_free(myvec);
+            dynvec_free(a, myvec);
         }
 
         for(i = 0; i < 128; ++i) {
-            dvec_push(myvec, i);
+            dynvec_push(a, myvec, i);
         }
         for(i = 0; i < 128; ++i) {
-            const int elem = dvec_get(myvec, i);
+            const int elem = dynvec_get(myvec, i);
             testing_expect(&t, elem == i);
         }
 
         testing_start_test(&t, "static_vec_pop");
-        testing_expect(&t, dvec_pop(myvec) == 127);
-        testing_expect(&t, dvec_pop(myvec) == 126);
-        testing_expect(&t, dvec_pop(myvec) == 125);
-        testing_expect(&t, dvec_pop(myvec) == 124);
+        testing_expect(&t, dynvec_pop(myvec) == 127);
+        testing_expect(&t, dynvec_pop(myvec) == 126);
+        testing_expect(&t, dynvec_pop(myvec) == 125);
+        testing_expect(&t, dynvec_pop(myvec) == 124);
         testing_expect(&t, myvec.len == 124);
         
         deferred(dynvec_free);

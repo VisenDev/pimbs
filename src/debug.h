@@ -79,6 +79,9 @@ static void debug_assert_internal(
 #define debug_assert(lhs, operator, rhs) \
     debug_assert_internal((lhs operator rhs), #lhs, #operator, #rhs, lhs, rhs, __FILE__, __LINE__)
 
+#define assert_not_null(ptr) \
+    debug_assert_internal((ptr != NULL), #ptr, "!=", "NULL", (long)ptr, (long)NULL, __FILE__, __LINE__)
+
 #define inline_assert(expression) \
     LIKELY_TRUE(expression) ? (void)0 : (void)(debug_log_location(), ABORT())
 

@@ -9,13 +9,13 @@
 
 #define word_offset(bit) ((bit) / CHAR_BIT)
 #define bit_offset(bit)  ((bit) % CHAR_BIT)
-#define Bitmap(bit_count) struct { unsigned char bits[(bit_count / CHAR_BIT) + 1]; }
+#define Bitmap(bit_count) struct { char bits[(bit_count / CHAR_BIT) + 1]; }
 
 /*generic function*/
 #define get_bit(bitmap, bit) get_bit_internal(bitmap.bits, sizeof(bitmap.bits), bit)
 UNUSED
-static int get_bit_internal(unsigned char bits[], unsigned long num_bytes, unsigned long bit) {
-    const unsigned long max_bit = num_bytes * CHAR_BIT;
+static int get_bit_internal(char bits[], long num_bytes, long bit) {
+    const long max_bit = num_bytes * CHAR_BIT;
     debug_assert((long)bit, <, (long)max_bit);
     return !!(bits[word_offset(bit)] & (1 << bit_offset(bit)));
 }
@@ -24,11 +24,12 @@ static int get_bit_internal(unsigned char bits[], unsigned long num_bytes, unsig
 #define set_bit(bitmap, bit) set_bit_internal(bitmap.bits, sizeof(bitmap), bit, 1)
 #define unset_bit(bitmap, bit) set_bit_internal(bitmap.bits, sizeof(bitmap), bit, 0)
 UNUSED
-static void set_bit_internal(unsigned char bits[], unsigned long num_bytes, unsigned long bit, int boolean) {
-    const unsigned long max_bit = num_bytes * CHAR_BIT;
+static void set_bit_internal(char bits[], long num_bytes, long bit, int boolean) {
+    const long max_bit = num_bytes * CHAR_BIT;
     const int true_or_false = !!boolean;
+    debug_assert((true_or_false == 0), ||, (true_or_false == 1));
     debug_assert((long)bit, <, (long)max_bit);
-    bits[word_offset(bit)] |= (true_or_false << bit_offset(bit));
+    bits[word_offset(bit)] |= ((char)true_or_false << bit_offset(bit));
 }
 
 #define Bitmap2D(width, height) struct { Bitmap(width) row[height]; }

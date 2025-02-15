@@ -4,7 +4,12 @@
 
 #define svec_cap(self) (long)(sizeof(self.items) / sizeof(self.items[0]))
 
-#define svec_append(self, value) do { self.len += 1; svec_set(self, self.len - 1, value); } while (0) 
+#define svec_append(self, value) \
+    do { \
+        long idx = self.len; \
+        svec_set(self, idx, value); \
+        self.len += 1; \
+    } while (0) 
 
 #define svec_get(self, index) ( \
     inline_assert(index >= 0), \
@@ -20,9 +25,11 @@
 
 #define svec_swap(self, index_a, index_b) \
     do { \
-        self._tmp = svec_get(self, index_a); \
-        svec_set(self, index_a, svec_get(self, index_b)); \
-        svec_set(self, index_b, self._tmp); \
+        int a = index_a; \
+        int b = index_b; \
+        self._tmp = svec_get(self, a); \
+        svec_set(self, a, svec_get(self, b)); \
+        svec_set(self, b, self._tmp); \
     } while (0)
 
 #define svec_top(self) (self.items[self.len - 1])
