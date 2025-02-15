@@ -4,7 +4,6 @@
 #include "attributes.h"
 #include "debug.h"
 #include "tui.h"
-#include "strutils.h"       
 
 /* utility macros for dealing with null */
 #define DEREF_OR_NULL(ptr) ptr == NULL ? NULL : *ptr
@@ -34,6 +33,7 @@ typedef struct Allocator {
 } Allocator;
 
 
+#include "strutils.h"       
 
 #ifndef NO_STDLIB
 #include "stdlib.h"

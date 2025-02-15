@@ -2,7 +2,7 @@
     #include <stdio.h>
     #define PUTCHAR_FUNCTION putchar
 #else
-    #include "src/minilibc.c"
+    #include "src/freestanding/minilibc.c"
 #endif
 
 #define FORMAT_IMPLEMENTATION

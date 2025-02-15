@@ -2,6 +2,7 @@
 #define STRUTILS_H
 
 #include "attributes.h"
+#include "allocator.h"
 
 typedef struct {
     char * str;
@@ -37,6 +38,7 @@ unsigned long string_length(const char * const str, const unsigned long maxlen)
 }
 
 
+
 /* memcpy */
 void memory_copy(void * dest, const void * const src, const unsigned long byte_count)
 {
@@ -46,6 +48,16 @@ void memory_copy(void * dest, const void * const src, const unsigned long byte_c
     for(i = 0; i < byte_count; ++i) {
         destbuf[i] = srcbuf[i];
     }
+}
+
+
+NODISCARD
+char * string_duplicate(Allocator a, char * str) {
+    const long len = string_length(str, 128000);
+    char * mem = a.alloc(a, len + 1);
+    memory_copy(mem, str, len);
+    mem[len] = 0;
+    return mem;
 }
 
 
