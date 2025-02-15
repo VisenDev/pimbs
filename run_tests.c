@@ -218,7 +218,6 @@ int main(void) {
         tui_put_str("\n");
     }
 
-
     testing_start_test(&t, "list");
     {
         list * node = list_cons(a, 0, NULL);

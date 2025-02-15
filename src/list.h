@@ -40,10 +40,10 @@ LIST_NAME * CONCAT(LIST_NAME, _cons)(Allocator a, LIST_TYPE value, struct LIST_N
 void CONCAT(LIST_NAME, _free)(Allocator a, LIST_NAME * start)
 #ifdef LIST_IMPLEMENTATION
 {
-    if(start != NULL) {
+    while (start != NULL) {
         LIST_NAME * next = start->next;
         a.free(a, start);
-        CONCAT(LIST_NAME, _free) (a, next);
+        start = next;
     }
 }
 #else
